@@ -1,0 +1,253 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+
+    <!-- Encabezado flotante -->
+    <div
+      class="relative -mt-6 mx-4 mb-6 flex items-center justify-between gap-4 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+    >
+      <div>
+        <h6 class="text-base font-semibold">
+          {{ editando ? 'Editar transacción' + (actual() ? ' ' + actual()!.consecutivo : '') : 'Nueva transacción en efectivo' }}
+        </h6>
+        <p class="mt-1 text-sm text-white/70">
+          {{ editando ? 'Modifica los datos y guarda los cambios.' : 'El consecutivo se asigna automáticamente al guardar.' }}
+        </p>
+      </div>
+
+      <a
+        [routerLink]="editando ? ['/transacciones', id] : ['/transacciones']"
+        class="shrink-0 text-xs font-bold uppercase text-white/80 transition hover:text-white"
+      >
+        ← Volver
+      </a>
+    </div>
+
+    @if (cargando()) {
+      <div class="flex flex-col items-center justify-center px-6 py-16" aria-busy="true">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+        <p class="mt-4 text-sm text-blue-gray-600">Cargando formulario...</p>
+      </div>
+    } @else if (errorCarga()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">No se pudo cargar el formulario</p>
+          <p class="mt-1 text-sm text-red-600">{{ errorCarga() }}</p>
+        </div>
+        <a routerLink="/transacciones" class="text-sm font-semibold text-red-700 transition hover:text-red-900">Volver a la lista</a>
+      </div>
+    } @else if (bloqueada()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 font-bold text-amber-700">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-amber-900">Esta transacción ya no se puede editar</p>
+          <p class="mt-1 text-sm text-amber-800">
+            Fue {{ actual()!.estado === 'Aprobado' ? 'aprobada' : 'rechazada' }} por un administrador.
+            Solo un administrador puede modificarla.
+          </p>
+        </div>
+        <a [routerLink]="['/transacciones', id]" class="text-sm font-semibold text-amber-900 transition hover:text-amber-700">Ver detalle</a>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="px-6 pb-6">
+
+        @if (editando && actual() && actual()!.estado !== 'Pendiente') {
+          <div class="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4" role="note">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 font-bold text-amber-700">!</span>
+            <p class="flex-1 pt-1 text-sm text-amber-900">
+              Esta transacción ya está <strong>{{ actual()!.estado.toLowerCase() }}</strong>. Al editarla se conserva su estado y su revisión.
+            </p>
+          </div>
+        }
+
+        @if (error()) {
+          <div class="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+            <p class="flex-1 pt-1 text-sm font-medium text-red-700">{{ error() }}</p>
+          </div>
+        }
+
+        <!-- ============ Declarante ============ -->
+        <fieldset class="mb-8">
+          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Declarante</legend>
+
+          @if (declarantes().length === 0) {
+            <p class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              Aún no hay declarantes registrados.
+              <a routerLink="/declarantes/nuevo" class="font-semibold underline">Crea el primero</a> para poder registrar transacciones.
+            </p>
+          } @else {
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label for="buscar-declarante" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                  Buscar declarante
+                </label>
+                <input
+                  id="buscar-declarante"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="Nombre o documento"
+                  [value]="busqueda()"
+                  (input)="busqueda.set($any($event.target).value)"
+                  class="h-11 w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm text-gray-700
+                         outline-none transition placeholder:text-gray-400 focus:border-blue-gray-500"
+                />
+                <p class="mt-1 min-h-4 text-xs text-blue-gray-500">
+                  {{ opciones().length }} de {{ declarantes().length }} declarantes
+                </p>
+              </div>
+
+              <div>
+                <label for="id_declarante" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                  Declarante <span class="text-red-500">*</span>
+                </label>
+                <select
+                  id="id_declarante"
+                  formControlName="id_declarante"
+                  [attr.aria-invalid]="mensaje('id_declarante') ? 'true' : null"
+                  aria-describedby="err-id_declarante"
+                  class="h-11 w-full rounded-[7px] border bg-white px-3 text-sm text-gray-700 outline-none transition"
+                  [class]="mensaje('id_declarante') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+                >
+                  <option [ngValue]="null" disabled>Selecciona un declarante</option>
+                  @for (d of opciones(); track d.id_declarante) {
+                    <option [ngValue]="d.id_declarante">{{ d.nombre }} · {{ d.tipo_documento }} {{ d.numero_documento }}</option>
+                  }
+                </select>
+                <p id="err-id_declarante" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('id_declarante') }}</p>
+              </div>
+            </div>
+          }
+        </fieldset>
+
+        <!-- ============ Operación ============ -->
+        <fieldset class="mb-8">
+          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Operación</legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="fecha_operacion" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Fecha de la operación <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="fecha_operacion"
+                type="date"
+                formControlName="fecha_operacion"
+                [max]="hoy"
+                [attr.aria-invalid]="mensaje('fecha_operacion') ? 'true' : null"
+                aria-describedby="err-fecha_operacion"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('fecha_operacion') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-fecha_operacion" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('fecha_operacion') }}</p>
+            </div>
+
+            <div>
+              <label for="valor" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Valor (COP) <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="valor"
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                placeholder="0"
+                formControlName="valor"
+                [attr.aria-invalid]="mensaje('valor') ? 'true' : null"
+                aria-describedby="err-valor"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm tabular-nums text-gray-700 outline-none transition"
+                [class]="mensaje('valor') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-valor" class="mt-1 min-h-4 text-xs" [class]="mensaje('valor') ? 'text-red-600' : 'font-semibold text-blue-gray-600'">
+                {{ mensaje('valor') || valorFormateado() }}
+              </p>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label for="actividad_economica" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Actividad económica <span class="font-normal text-blue-gray-400">(opcional)</span>
+              </label>
+              <input
+                id="actividad_economica"
+                type="text"
+                autocomplete="off"
+                formControlName="actividad_economica"
+                [attr.aria-invalid]="mensaje('actividad_economica') ? 'true' : null"
+                aria-describedby="err-actividad_economica"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('actividad_economica') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-actividad_economica" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('actividad_economica') }}</p>
+            </div>
+
+            <div>
+              <label for="origen_fondos" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Origen de los fondos <span class="font-normal text-blue-gray-400">(opcional)</span>
+              </label>
+              <textarea
+                id="origen_fondos"
+                rows="3"
+                formControlName="origen_fondos"
+                class="w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2 text-sm text-gray-700 outline-none
+                       transition focus:border-blue-gray-500"
+              ></textarea>
+            </div>
+
+            <div>
+              <label for="destino_fondos" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Destino de los fondos <span class="font-normal text-blue-gray-400">(opcional)</span>
+              </label>
+              <textarea
+                id="destino_fondos"
+                rows="3"
+                formControlName="destino_fondos"
+                class="w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2 text-sm text-gray-700 outline-none
+                       transition focus:border-blue-gray-500"
+              ></textarea>
+            </div>
+
+            <div class="sm:col-span-2">
+              <label for="descripcion" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Descripción <span class="font-normal text-blue-gray-400">(opcional)</span>
+              </label>
+              <textarea
+                id="descripcion"
+                rows="3"
+                formControlName="descripcion"
+                class="w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2 text-sm text-gray-700 outline-none
+                       transition focus:border-blue-gray-500"
+              ></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ============ Acciones ============ -->
+        <div class="flex flex-col-reverse items-stretch gap-3 border-t border-blue-gray-50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-xs text-blue-gray-500"><span class="text-red-500">*</span> Campo obligatorio</p>
+
+          <div class="flex flex-col-reverse gap-3 sm:flex-row">
+            <a
+              [routerLink]="editando ? ['/transacciones', id] : ['/transacciones']"
+              class="inline-flex h-11 items-center justify-center rounded-lg px-5 text-xs font-bold uppercase
+                     text-gray-600 transition hover:bg-blue-gray-500/10"
+            >
+              Cancelar
+            </a>
+
+            <button
+              type="submit"
+              [disabled]="guardando() || declarantes().length === 0"
+              class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+                     bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg
+                     disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ guardando() ? 'Guardando...' : editando ? 'Guardar cambios' : 'Registrar transacción' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    }
+  </div>
+</div>

@@ -70,7 +70,27 @@ export const routes: Routes = [
       },
 
       // Operaciones
-      { path: 'transacciones', data: { titulo: 'Transacciones en efectivo' }, loadComponent: proximamente },
+            {
+        path: 'transacciones',
+        data: { titulo: 'Transacciones en efectivo' },
+        loadComponent: () => import('./bussiness/transacciones/transacciones').then((m) => m.Transacciones),
+      },
+      {
+        path: 'transacciones/nuevo',
+        data: { titulo: 'Nueva transacción' },
+        loadComponent: () => import('./bussiness/transacciones/transaccion-form').then((m) => m.TransaccionForm),
+      },
+      {
+        path: 'transacciones/:id',
+        data: { titulo: 'Detalle de la transacción' },
+        loadComponent: () =>
+          import('./bussiness/transacciones/transaccion-detalle').then((m) => m.TransaccionDetalle),
+      },
+      {
+        path: 'transacciones/:id/editar',
+        data: { titulo: 'Editar transacción' },
+        loadComponent: () => import('./bussiness/transacciones/transaccion-form').then((m) => m.TransaccionForm),
+      },
       { path: 'ausencias', data: { titulo: 'Ausencias' }, loadComponent: proximamente },
       { path: 'reportes-ros', data: { titulo: 'Reportes ROS' }, loadComponent: proximamente },
 
