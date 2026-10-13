@@ -8,10 +8,10 @@
     >
       <div>
         <h6 class="text-base font-semibold">
-          {{ editando ? 'Editar transacción' + (actual() ? ' ' + actual()!.consecutivo : '') : 'Nueva transacción en efectivo' }}
+          {{ editando ? 'Editar transacción' + (actual() ? ' ' + actual()!.consecutivo : '') : 'Transacción individual en efectivo' }}
         </h6>
         <p class="mt-1 text-sm text-white/70">
-          {{ editando ? 'Modifica los datos y guarda los cambios.' : 'El consecutivo se asigna automáticamente al guardar.' }}
+          Formato E-PL-FO-15 · Se diligencia por cada transacción igual o superior a {{ umbralTexto }}
         </p>
       </div>
 
@@ -68,64 +68,81 @@
           </div>
         }
 
-        <!-- ============ Declarante ============ -->
+        <!-- ============ 1. Información general ============ -->
         <fieldset class="mb-8">
-          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Declarante</legend>
+          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Información general</legend>
 
-          @if (declarantes().length === 0) {
-            <p class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-              Aún no hay declarantes registrados.
-              <a routerLink="/declarantes/nuevo" class="font-semibold underline">Crea el primero</a> para poder registrar transacciones.
-            </p>
-          } @else {
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <label for="buscar-declarante" class="mb-1 block text-sm font-medium text-blue-gray-700">
-                  Buscar declarante
-                </label>
-                <input
-                  id="buscar-declarante"
-                  type="search"
-                  autocomplete="off"
-                  placeholder="Nombre o documento"
-                  [value]="busqueda()"
-                  (input)="busqueda.set($any($event.target).value)"
-                  class="h-11 w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm text-gray-700
-                         outline-none transition placeholder:text-gray-400 focus:border-blue-gray-500"
-                />
-                <p class="mt-1 min-h-4 text-xs text-blue-gray-500">
-                  {{ opciones().length }} de {{ declarantes().length }} declarantes
-                </p>
-              </div>
-
-              <div>
-                <label for="id_declarante" class="mb-1 block text-sm font-medium text-blue-gray-700">
-                  Declarante <span class="text-red-500">*</span>
-                </label>
-                <select
-                  id="id_declarante"
-                  formControlName="id_declarante"
-                  [attr.aria-invalid]="mensaje('id_declarante') ? 'true' : null"
-                  aria-describedby="err-id_declarante"
-                  class="h-11 w-full rounded-[7px] border bg-white px-3 text-sm text-gray-700 outline-none transition"
-                  [class]="mensaje('id_declarante') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
-                >
-                  <option [ngValue]="null" disabled>Selecciona un declarante</option>
-                  @for (d of opciones(); track d.id_declarante) {
-                    <option [ngValue]="d.id_declarante">{{ d.nombre }} · {{ d.tipo_documento }} {{ d.numero_documento }}</option>
-                  }
-                </select>
-                <p id="err-id_declarante" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('id_declarante') }}</p>
-              </div>
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <div>
+              <label for="area_responsable" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Área responsable <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="area_responsable"
+                formControlName="area_responsable"
+                [attr.aria-invalid]="mensaje('area_responsable') ? 'true' : null"
+                aria-describedby="err-area_responsable"
+                class="h-11 w-full rounded-[7px] border bg-white px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('area_responsable') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              >
+                <option value="" disabled>Seleccione un área</option>
+                @for (a of areas(); track a) {
+                  <option [value]="a">{{ a }}</option>
+                }
+              </select>
+              <p id="err-area_responsable" class="mt-1 min-h-4 text-xs text-red-600">
+                {{ mensaje('area_responsable') || (areas().length === 0 ? 'No hay dependencias registradas.' : '') }}
+              </p>
             </div>
-          }
+
+            <div>
+              <label for="periodo_reporte" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Periodo de reporte <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="periodo_reporte"
+                type="month"
+                formControlName="periodo_reporte"
+                [attr.aria-invalid]="mensaje('periodo_reporte') ? 'true' : null"
+                aria-describedby="err-periodo_reporte"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('periodo_reporte') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-periodo_reporte" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('periodo_reporte') }}</p>
+            </div>
+
+            <div>
+              <label for="fecha_elaboracion" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Fecha de elaboración <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="fecha_elaboracion"
+                type="date"
+                formControlName="fecha_elaboracion"
+                [max]="hoy"
+                [attr.aria-invalid]="mensaje('fecha_elaboracion') ? 'true' : null"
+                aria-describedby="err-fecha_elaboracion"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('fecha_elaboracion') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-fecha_elaboracion" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('fecha_elaboracion') }}</p>
+            </div>
+          </div>
         </fieldset>
 
-        <!-- ============ Operación ============ -->
+        <!-- ============ 2. Datos de la operación ============ -->
         <fieldset class="mb-8">
-          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Operación</legend>
+          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Datos de la operación</legend>
 
           <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <p class="mb-1 block text-sm font-medium text-blue-gray-700">Consecutivo interno</p>
+              <p class="flex h-11 items-center rounded-[7px] border border-blue-gray-100 bg-gray-50 px-3 text-sm text-blue-gray-600">
+                {{ actual() ? actual()!.consecutivo : 'Se asigna automáticamente al guardar' }}
+              </p>
+              <p class="mt-1 min-h-4 text-xs"></p>
+            </div>
+
             <div>
               <label for="fecha_operacion" class="mb-1 block text-sm font-medium text-blue-gray-700">
                 Fecha de la operación <span class="text-red-500">*</span>
@@ -143,16 +160,49 @@
               <p id="err-fecha_operacion" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('fecha_operacion') }}</p>
             </div>
 
+            <div class="sm:col-span-2">
+              <p id="lbl-tipo" class="mb-2 block text-sm font-medium text-blue-gray-700">
+                Tipo de operación <span class="text-red-500">*</span>
+              </p>
+              <div role="radiogroup" aria-labelledby="lbl-tipo" aria-describedby="err-tipo_operacion" class="flex flex-wrap gap-x-6 gap-y-2">
+                @for (t of tiposOperacion; track t) {
+                  <label class="flex cursor-pointer items-center gap-2 text-sm text-blue-gray-700">
+                    <input type="radio" formControlName="tipo_operacion" [value]="t" [attr.value]="t" class="h-4 w-4 accent-blue-600" />
+                    {{ t }}
+                  </label>
+                }
+              </div>
+              <p id="err-tipo_operacion" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('tipo_operacion') }}</p>
+            </div>
+
+            @if (esOtro()) {
+              <div class="sm:col-span-2">
+                <label for="tipo_operacion_otro" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                  ¿Cuál? <span class="text-red-500">*</span>
+                </label>
+                <input
+                  id="tipo_operacion_otro"
+                  type="text"
+                  autocomplete="off"
+                  formControlName="tipo_operacion_otro"
+                  [attr.aria-invalid]="mensaje('tipo_operacion_otro') ? 'true' : null"
+                  aria-describedby="err-tipo_operacion_otro"
+                  class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                  [class]="mensaje('tipo_operacion_otro') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+                />
+                <p id="err-tipo_operacion_otro" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('tipo_operacion_otro') }}</p>
+              </div>
+            }
+
             <div>
               <label for="valor" class="mb-1 block text-sm font-medium text-blue-gray-700">
-                Valor (COP) <span class="text-red-500">*</span>
+                Valor en efectivo (COP) <span class="text-red-500">*</span>
               </label>
               <input
                 id="valor"
                 type="number"
                 inputmode="decimal"
                 step="0.01"
-                min="0"
                 placeholder="0"
                 formControlName="valor"
                 [attr.aria-invalid]="mensaje('valor') ? 'true' : null"
@@ -161,13 +211,161 @@
                 [class]="mensaje('valor') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
               />
               <p id="err-valor" class="mt-1 min-h-4 text-xs" [class]="mensaje('valor') ? 'text-red-600' : 'font-semibold text-blue-gray-600'">
-                {{ mensaje('valor') || valorFormateado() }}
+                {{ mensaje('valor') || valorFormateado() || 'Mínimo ' + umbralTexto }}
               </p>
             </div>
 
+            <div>
+              <label for="numero_factura" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Número de factura / recibo <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="numero_factura"
+                type="text"
+                autocomplete="off"
+                formControlName="numero_factura"
+                [attr.aria-invalid]="mensaje('numero_factura') ? 'true' : null"
+                aria-describedby="err-numero_factura"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('numero_factura') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-numero_factura" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('numero_factura') }}</p>
+            </div>
+
             <div class="sm:col-span-2">
+              <label for="concepto_pago" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Concepto del pago <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                id="concepto_pago"
+                rows="2"
+                formControlName="concepto_pago"
+                [attr.aria-invalid]="mensaje('concepto_pago') ? 'true' : null"
+                aria-describedby="err-concepto_pago"
+                class="w-full rounded-[7px] border bg-transparent px-3 py-2 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('concepto_pago') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              ></textarea>
+              <p id="err-concepto_pago" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('concepto_pago') }}</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ============ 3. Datos de quien realiza el pago ============ -->
+        <fieldset class="mb-8">
+          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Datos de quien realiza el pago</legend>
+
+          @if (declarantes().length === 0) {
+            <p class="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              Aún no hay declarantes registrados.
+              <a routerLink="/declarantes/nuevo" target="_blank" class="font-semibold underline">Registra al primero</a>
+              (se abre en otra pestaña) y luego pulsa «Actualizar lista».
+            </p>
+          }
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="buscar-declarante" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Buscar por nombre o documento
+              </label>
+              <input
+                id="buscar-declarante"
+                type="search"
+                autocomplete="off"
+                placeholder="Nombre, razón social o documento"
+                [value]="busqueda()"
+                (input)="busqueda.set($any($event.target).value)"
+                class="h-11 w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm text-gray-700
+                       outline-none transition placeholder:text-gray-400 focus:border-blue-gray-500"
+              />
+              <p class="mt-1 min-h-4 text-xs text-blue-gray-500">
+                {{ opciones().length }} de {{ declarantes().length }} declarantes ·
+                <a routerLink="/declarantes/nuevo" target="_blank" class="font-semibold text-blue-500 hover:text-blue-700">Registrar nuevo</a>
+                ·
+                <button
+                  type="button"
+                  (click)="actualizarDeclarantes()"
+                  [disabled]="actualizandoLista()"
+                  class="font-semibold text-blue-500 hover:text-blue-700 disabled:opacity-50"
+                >
+                  {{ actualizandoLista() ? 'Actualizando...' : 'Actualizar lista' }}
+                </button>
+              </p>
+            </div>
+
+            <div>
+              <label for="id_declarante" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Nombre completo o razón social <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="id_declarante"
+                formControlName="id_declarante"
+                [attr.aria-invalid]="mensaje('id_declarante') ? 'true' : null"
+                aria-describedby="err-id_declarante"
+                class="h-11 w-full rounded-[7px] border bg-white px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('id_declarante') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              >
+                <option [ngValue]="null" disabled>Selecciona quién realiza el pago</option>
+                @for (d of opciones(); track d.id_declarante) {
+                  <option [ngValue]="d.id_declarante">{{ d.nombre }} · {{ d.tipo_documento }} {{ d.numero_documento }}</option>
+                }
+              </select>
+              <p id="err-id_declarante" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('id_declarante') }}</p>
+            </div>
+          </div>
+
+          <!-- Datos del declarante elegido (solo lectura) -->
+          @if (declaranteElegido(); as d) {
+            <div class="mb-5 rounded-lg border border-blue-gray-100 bg-gray-50 p-4" id="datos-pagador">
+              <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                  <dt class="text-xs font-semibold text-blue-gray-500">Tipo y número de identificación</dt>
+                  <dd class="font-medium text-blue-gray-900">{{ d.tipo_documento }} {{ d.numero_documento }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs font-semibold text-blue-gray-500">Teléfono</dt>
+                  <dd class="font-medium text-blue-gray-900">{{ d.telefono || '—' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs font-semibold text-blue-gray-500">Correo electrónico</dt>
+                  <dd class="break-all font-medium text-blue-gray-900">{{ d.correo || '—' }}</dd>
+                </div>
+                <div class="sm:col-span-2 lg:col-span-3">
+                  <dt class="text-xs font-semibold text-blue-gray-500">Dirección</dt>
+                  <dd class="font-medium text-blue-gray-900">{{ d.direccion || '—' }}</dd>
+                </div>
+              </dl>
+
+              @if (faltantes().length > 0) {
+                <p class="mt-3 text-xs text-amber-800" role="note">
+                  Al registro de este declarante le falta: {{ faltantes().join(', ') }}.
+                  <a [routerLink]="['/declarantes', d.id_declarante, 'editar']" target="_blank" class="font-semibold underline">Completarlo</a>
+                  (se abre en otra pestaña) y luego pulsa «Actualizar lista».
+                </p>
+              }
+            </div>
+          }
+
+          <div class="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="barrio" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Barrio <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="barrio"
+                type="text"
+                autocomplete="off"
+                formControlName="barrio"
+                [attr.aria-invalid]="mensaje('barrio') ? 'true' : null"
+                aria-describedby="err-barrio"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('barrio') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-barrio" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('barrio') }}</p>
+            </div>
+
+            <div>
               <label for="actividad_economica" class="mb-1 block text-sm font-medium text-blue-gray-700">
-                Actividad económica <span class="font-normal text-blue-gray-400">(opcional)</span>
+                Actividad económica <span class="text-red-500">*</span>
               </label>
               <input
                 id="actividad_economica"
@@ -182,43 +380,110 @@
               <p id="err-actividad_economica" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('actividad_economica') }}</p>
             </div>
 
-            <div>
+            <div class="sm:col-span-2">
+              <label for="relacion_paciente" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Relación con el paciente / usuario <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="relacion_paciente"
+                type="text"
+                autocomplete="off"
+                formControlName="relacion_paciente"
+                [attr.aria-invalid]="mensaje('relacion_paciente') ? 'true' : null"
+                aria-describedby="err-relacion_paciente"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('relacion_paciente') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-relacion_paciente" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('relacion_paciente') }}</p>
+            </div>
+
+            <div class="sm:col-span-2">
               <label for="origen_fondos" class="mb-1 block text-sm font-medium text-blue-gray-700">
-                Origen de los fondos <span class="font-normal text-blue-gray-400">(opcional)</span>
+                Origen de fondos declarados <span class="text-red-500">*</span>
               </label>
               <textarea
                 id="origen_fondos"
                 rows="3"
                 formControlName="origen_fondos"
-                class="w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2 text-sm text-gray-700 outline-none
-                       transition focus:border-blue-gray-500"
+                [attr.aria-invalid]="mensaje('origen_fondos') ? 'true' : null"
+                aria-describedby="err-origen_fondos"
+                class="w-full rounded-[7px] border bg-transparent px-3 py-2 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('origen_fondos') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
               ></textarea>
-            </div>
-
-            <div>
-              <label for="destino_fondos" class="mb-1 block text-sm font-medium text-blue-gray-700">
-                Destino de los fondos <span class="font-normal text-blue-gray-400">(opcional)</span>
-              </label>
-              <textarea
-                id="destino_fondos"
-                rows="3"
-                formControlName="destino_fondos"
-                class="w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2 text-sm text-gray-700 outline-none
-                       transition focus:border-blue-gray-500"
-              ></textarea>
+              <p id="err-origen_fondos" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('origen_fondos') }}</p>
             </div>
 
             <div class="sm:col-span-2">
-              <label for="descripcion" class="mb-1 block text-sm font-medium text-blue-gray-700">
-                Descripción <span class="font-normal text-blue-gray-400">(opcional)</span>
+              <label for="senales_alerta" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Descripción de señales de alerta <span class="font-normal text-blue-gray-400">(si aplica)</span>
               </label>
               <textarea
-                id="descripcion"
+                id="senales_alerta"
                 rows="3"
-                formControlName="descripcion"
+                formControlName="senales_alerta"
                 class="w-full rounded-[7px] border border-blue-gray-200 bg-transparent px-3 py-2 text-sm text-gray-700 outline-none
                        transition focus:border-blue-gray-500"
               ></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ============ 4. Autorización de datos personales ============ -->
+        <fieldset class="mb-8">
+          <legend class="mb-4 text-sm font-bold uppercase text-blue-gray-400">Autorización de datos personales</legend>
+
+          <div class="mb-4 max-h-44 space-y-3 overflow-y-auto rounded-lg border border-blue-gray-100 bg-gray-50 p-4 text-xs leading-relaxed text-blue-gray-700" tabindex="0" aria-label="Texto de la autorización de datos personales">
+            @for (p of textoAutorizacion; track $index) {
+              <p>{{ p }}</p>
+            }
+          </div>
+
+          <label class="mb-1 flex cursor-pointer items-start gap-2 text-sm text-blue-gray-800">
+            <input
+              id="autoriza"
+              type="checkbox"
+              formControlName="autoriza"
+              [attr.aria-invalid]="mensaje('autoriza') ? 'true' : null"
+              aria-describedby="err-autoriza"
+              class="mt-0.5 h-4 w-4 accent-blue-600"
+            />
+            <span>El titular de los datos declara y autoriza lo anterior. <span class="text-red-500">*</span></span>
+          </label>
+          <p id="err-autoriza" class="mb-4 min-h-4 text-xs text-red-600">{{ mensaje('autoriza') }}</p>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="titular_nombre" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Nombre del titular <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="titular_nombre"
+                type="text"
+                autocomplete="off"
+                formControlName="titular_nombre"
+                [attr.aria-invalid]="mensaje('titular_nombre') ? 'true' : null"
+                aria-describedby="err-titular_nombre"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('titular_nombre') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-titular_nombre" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('titular_nombre') }}</p>
+            </div>
+
+            <div>
+              <label for="titular_documento" class="mb-1 block text-sm font-medium text-blue-gray-700">
+                Tipo y número de documento <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="titular_documento"
+                type="text"
+                autocomplete="off"
+                formControlName="titular_documento"
+                [attr.aria-invalid]="mensaje('titular_documento') ? 'true' : null"
+                aria-describedby="err-titular_documento"
+                class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+                [class]="mensaje('titular_documento') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+              />
+              <p id="err-titular_documento" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('titular_documento') }}</p>
             </div>
           </div>
         </fieldset>
@@ -243,7 +508,7 @@
                      bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg
                      disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {{ guardando() ? 'Guardando...' : editando ? 'Guardar cambios' : 'Registrar transacción' }}
+              {{ guardando() ? 'Guardando...' : editando ? 'Guardar cambios' : 'Enviar formato' }}
             </button>
           </div>
         </div>

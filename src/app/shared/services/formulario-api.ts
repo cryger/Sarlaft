@@ -18,7 +18,11 @@ export interface FormularioBase {
   fecha_aprobacion: string | null;
   archivo_pdf: string | null;
   declarante_nombre?: string | null;
+  declarante_tipo_documento?: string | null;
   declarante_documento?: string | null;
+  declarante_telefono?: string | null;
+  declarante_correo?: string | null;
+  declarante_direccion?: string | null;
   revisor_nombre?: string | null;
 }
 

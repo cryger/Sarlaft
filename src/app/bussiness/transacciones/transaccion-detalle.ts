@@ -29,6 +29,13 @@ export class TransaccionDetalle implements OnInit {
   readonly fechaHora = formatoFechaHora;
   readonly moneda = formatoMoneda;
 
+    /** 2026-10 -> octubre de 2026 */
+  periodo(valor: string | null): string {
+    if (!valor || !/^\d{4}-\d{2}$/.test(valor)) return valor || '—';
+    const [a, m] = valor.split('-');
+    return new Date(Number(a), Number(m) - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+  }
+
   t = signal<Transaccion | null>(null);
   cargando = signal(true);
   error = signal('');
