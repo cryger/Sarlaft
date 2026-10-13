@@ -1,0 +1,328 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+
+    <!-- Encabezado flotante -->
+    <div
+      class="relative -mt-6 mx-4 mb-6 flex flex-col gap-4 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20
+             lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div>
+        <h6 class="text-base font-semibold">Lista de dependencias</h6>
+        <p class="mt-1 text-sm text-white/70">
+          @if (termino().trim()) {
+            {{ filtradas().length }} de {{ dependencias().length }}
+            {{ dependencias().length === 1 ? 'dependencia' : 'dependencias' }}
+          } @else {
+            {{ dependencias().length }}
+            {{ dependencias().length === 1 ? 'dependencia registrada' : 'dependencias registradas' }}
+          }
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="relative w-full sm:w-72">
+          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/60">⌕</span>
+
+          <input
+            type="search"
+            placeholder="Buscar dependencia..."
+            aria-label="Buscar dependencia"
+            [value]="termino()"
+            (input)="termino.set($any($event.target).value)"
+            class="h-10 w-full rounded-lg border border-white/20 bg-white/10 pl-9 pr-3 text-sm text-white
+                   outline-none transition placeholder:text-white/60 focus:border-white/50 focus:bg-white/15"
+          />
+        </div>
+
+        @if (auth.esAdmin()) {
+          <button
+            type="button"
+            (click)="abrirCrear()"
+            class="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-5
+                   text-xs font-bold uppercase text-white shadow-md shadow-orange-500/20 transition
+                   bg-gradient-to-tr from-orange-600 to-orange-400 hover:shadow-lg hover:shadow-orange-500/40"
+          >
+            <span class="text-base leading-none">+</span>
+            Nueva dependencia
+          </button>
+        } @else {
+          <span class="inline-flex h-10 items-center rounded-lg bg-white/10 px-4 text-xs font-bold uppercase text-white/70">
+            Solo lectura
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Éxito -->
+    @if (exito()) {
+      <div class="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4" role="status">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-green-100 font-bold text-green-600">✓</span>
+        <p class="flex-1 pt-1 text-sm font-medium text-green-800">{{ exito() }}</p>
+        <button
+          type="button"
+          (click)="exito.set('')"
+          class="text-sm font-semibold text-green-700 transition hover:text-green-900"
+        >
+          Cerrar
+        </button>
+      </div>
+    }
+
+    <!-- Error al cargar -->
+    @if (error()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">No se pudieron cargar las dependencias</p>
+          <p class="mt-1 text-sm text-red-600">{{ error() }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="cargar()"
+          class="text-sm font-semibold text-red-700 transition hover:text-red-900"
+        >
+          Reintentar
+        </button>
+      </div>
+    }
+
+    <!-- Cargando -->
+    @if (cargando()) {
+      <div class="flex flex-col items-center justify-center px-6 py-16" aria-busy="true">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+        <p class="mt-4 text-sm text-blue-gray-600">Cargando dependencias...</p>
+      </div>
+    } @else if (!error()) {
+      <div class="overflow-x-auto pb-2">
+        <table class="w-full min-w-[560px] table-auto">
+          <thead>
+            <tr>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Dependencia</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Declarantes</th>
+              @if (auth.esAdmin()) {
+                <th class="border-b border-blue-gray-50 px-6 py-3 text-right text-[11px] font-bold uppercase text-blue-gray-400">Acciones</th>
+              }
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (d of filtradas(); track d.id_dependencia) {
+              <tr class="transition hover:bg-gray-50 [&:last-child>td]:border-b-0">
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <div class="flex items-center gap-4">
+                    <span
+                      class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-base text-white
+                             bg-gradient-to-tr from-blue-gray-600 to-blue-gray-400"
+                    >
+                      ▦
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-blue-gray-900">{{ d.nombre }}</p>
+                      <p class="text-xs text-blue-gray-500">ID #{{ d.id_dependencia }}</p>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  @if ((d.total_declarantes ?? 0) > 0) {
+                    <span class="text-xs font-semibold text-blue-gray-700">
+                      {{ d.total_declarantes }}
+                      {{ d.total_declarantes === 1 ? 'declarante' : 'declarantes' }}
+                    </span>
+                  } @else {
+                    <span class="text-xs text-blue-gray-500">Sin declarantes</span>
+                  }
+                </td>
+
+                @if (auth.esAdmin()) {
+                  <td class="border-b border-blue-gray-50 px-6 py-3">
+                    <div class="flex items-center justify-end gap-4">
+                      <button
+                        type="button"
+                        (click)="abrirEditar(d)"
+                        class="text-xs font-semibold text-blue-gray-600 transition hover:text-orange-500"
+                      >
+                        Editar
+                      </button>
+
+                      @if ((d.total_declarantes ?? 0) > 0) {
+                        <button
+                          type="button"
+                          disabled
+                          [title]="'No se puede eliminar: tiene ' + d.total_declarantes + ' declarante(s)'"
+                          class="cursor-not-allowed text-xs font-semibold text-blue-gray-300"
+                        >
+                          Eliminar
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          (click)="pedirEliminar(d)"
+                          class="text-xs font-semibold text-blue-gray-600 transition hover:text-red-500"
+                        >
+                          Eliminar
+                        </button>
+                      }
+                    </div>
+                  </td>
+                }
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="auth.esAdmin() ? 3 : 2" class="px-6 py-16 text-center">
+                  <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-blue-gray-50 text-2xl text-blue-gray-400">▦</div>
+
+                  @if (dependencias().length === 0) {
+                    <h3 class="mt-4 font-semibold text-blue-gray-900">Todavía no hay dependencias</h3>
+                    <p class="mx-auto mt-1 max-w-md text-sm text-blue-gray-600">
+                      @if (auth.esAdmin()) {
+                        Crea la primera para poder registrar declarantes.
+                      } @else {
+                        Pide a un administrador que cree la primera.
+                      }
+                    </p>
+                    @if (auth.esAdmin()) {
+                      <button
+                        type="button"
+                        (click)="abrirCrear()"
+                        class="mt-4 text-sm font-semibold text-blue-500 transition hover:text-blue-700"
+                      >
+                        + Nueva dependencia
+                      </button>
+                    }
+                  } @else {
+                    <h3 class="mt-4 font-semibold text-blue-gray-900">No se encontraron dependencias</h3>
+                    <p class="mx-auto mt-1 max-w-md text-sm text-blue-gray-600">
+                      Ninguna coincide con «{{ termino() }}».
+                    </p>
+                    <button
+                      type="button"
+                      (click)="termino.set('')"
+                      class="mt-4 text-sm font-semibold text-blue-500 transition hover:text-blue-700"
+                    >
+                      Limpiar búsqueda
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Las ventanas solo existen para administradores (los gestores tienen la lista en solo lectura) -->
+@if (auth.esAdmin()) {
+  <!-- ===================== Ventana: crear / editar ===================== -->
+  <dialog
+    #dlgForm
+    aria-labelledby="dep-titulo"
+    (click)="clicEnFondo($event, dlgForm)"
+    class="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 text-gray-700 shadow-xl backdrop:bg-gray-950/60"
+  >
+    <form (submit)="guardar(); $event.preventDefault()" novalidate class="flex flex-col">
+      <div class="px-6 pb-2 pt-6">
+        <h2 id="dep-titulo" class="text-base font-semibold text-blue-gray-900">
+          {{ seleccionada() ? 'Editar dependencia' : 'Nueva dependencia' }}
+        </h2>
+        <p class="mt-1 text-sm text-blue-gray-600">
+          {{ seleccionada() ? 'Cambia el nombre de la dependencia.' : 'Escribe el nombre de la nueva dependencia.' }}
+        </p>
+      </div>
+
+      <div class="px-6 py-4">
+        @if (errorForm()) {
+          <div class="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3" role="alert">
+            <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-sm font-bold text-red-600">!</span>
+            <p class="text-sm text-red-700">{{ errorForm() }}</p>
+          </div>
+        }
+
+        <label for="dep-nombre" class="mb-1 block text-sm font-medium text-blue-gray-700">
+          Nombre <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="dep-nombre"
+          type="text"
+          autocomplete="off"
+          autofocus
+          [formControl]="nombre"
+          [attr.aria-invalid]="mensajeNombre() ? 'true' : null"
+          aria-describedby="dep-error"
+          class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+          [class]="mensajeNombre() ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+        />
+        <p id="dep-error" class="mt-1 min-h-4 text-xs text-red-600">{{ mensajeNombre() }}</p>
+      </div>
+
+      <div class="flex flex-col-reverse gap-3 border-t border-blue-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          (click)="dlgForm.close()"
+          class="h-11 rounded-lg px-5 text-xs font-bold uppercase text-gray-600 transition hover:bg-blue-gray-500/10"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          [disabled]="guardando()"
+          class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+                 bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg
+                 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ guardando() ? 'Guardando...' : seleccionada() ? 'Guardar cambios' : 'Crear dependencia' }}
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===================== Ventana: eliminar ===================== -->
+  <dialog
+    #dlgEliminar
+    aria-labelledby="dep-eliminar-titulo"
+    (click)="clicEnFondo($event, dlgEliminar)"
+    class="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 text-gray-700 shadow-xl backdrop:bg-gray-950/60"
+  >
+    <div class="flex flex-col">
+      <div class="px-6 pb-2 pt-6">
+        <h2 id="dep-eliminar-titulo" class="text-base font-semibold text-blue-gray-900">Eliminar dependencia</h2>
+        <p class="mt-2 text-sm text-blue-gray-600">
+          ¿Seguro que quieres eliminar «<span class="font-semibold text-blue-gray-900">{{ aEliminar()?.nombre }}</span>»?
+          Esta acción no se puede deshacer.
+        </p>
+      </div>
+
+      @if (errorEliminar()) {
+        <div class="mx-6 mt-3 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3" role="alert">
+          <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-sm font-bold text-red-600">!</span>
+          <p class="text-sm text-red-700">{{ errorEliminar() }}</p>
+        </div>
+      }
+
+      <div class="mt-4 flex flex-col-reverse gap-3 border-t border-blue-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          (click)="dlgEliminar.close()"
+          class="h-11 rounded-lg px-5 text-xs font-bold uppercase text-gray-600 transition hover:bg-blue-gray-500/10"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          (click)="confirmarEliminar()"
+          [disabled]="eliminando()"
+          class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+                 bg-gradient-to-tr from-red-600 to-red-400 hover:shadow-lg
+                 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ eliminando() ? 'Eliminando...' : 'Sí, eliminar' }}
+        </button>
+      </div>
+    </div>
+  </dialog>
+}

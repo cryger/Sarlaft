@@ -1,0 +1,529 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+
+    <!-- Encabezado flotante -->
+    <div
+      class="relative -mt-6 mx-4 mb-6 flex flex-col gap-4 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20
+             lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div>
+        <h6 class="text-base font-semibold">Lista de usuarios</h6>
+        <p class="mt-1 text-sm text-white/70">
+          {{ usuarios().length }} {{ usuarios().length === 1 ? 'usuario' : 'usuarios' }}
+          · {{ activos() }} {{ activos() === 1 ? 'activo' : 'activos' }}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div class="relative w-full sm:w-72">
+          <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/60">⌕</span>
+
+          <input
+            type="search"
+            placeholder="Buscar usuario..."
+            aria-label="Buscar usuario"
+            [value]="termino()"
+            (input)="termino.set($any($event.target).value)"
+            class="h-10 w-full rounded-lg border border-white/20 bg-white/10 pl-9 pr-3 text-sm text-white
+                   outline-none transition placeholder:text-white/60 focus:border-white/50 focus:bg-white/15"
+          />
+        </div>
+
+        <button
+          type="button"
+          (click)="abrirCrear()"
+          class="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-5
+                 text-xs font-bold uppercase text-white shadow-md shadow-orange-500/20 transition
+                 bg-gradient-to-tr from-orange-600 to-orange-400 hover:shadow-lg hover:shadow-orange-500/40"
+        >
+          <span class="text-base leading-none">+</span>
+          Nuevo usuario
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="mb-4 flex flex-wrap items-center gap-3 px-6">
+      <label class="flex items-center gap-2 text-xs font-bold uppercase text-blue-gray-400">
+        Rol
+        <select
+          aria-label="Filtrar por rol"
+          [value]="filtroRol()"
+          (change)="filtroRol.set($any($event.target).value)"
+          class="h-9 rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm font-normal normal-case
+                 text-gray-700 outline-none focus:border-blue-gray-500"
+        >
+          <option value="">Todos</option>
+          <option value="Administrador">Administrador</option>
+          <option value="Gestor">Gestor</option>
+        </select>
+      </label>
+
+      <label class="flex items-center gap-2 text-xs font-bold uppercase text-blue-gray-400">
+        Estado
+        <select
+          aria-label="Filtrar por estado"
+          [value]="filtroEstado()"
+          (change)="filtroEstado.set($any($event.target).value)"
+          class="h-9 rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm font-normal normal-case
+                 text-gray-700 outline-none focus:border-blue-gray-500"
+        >
+          <option value="">Todos</option>
+          <option value="activos">Activos</option>
+          <option value="inactivos">Inactivos</option>
+        </select>
+      </label>
+
+      @if (hayFiltros()) {
+        <span class="text-xs text-blue-gray-500">{{ filtrados().length }} de {{ usuarios().length }}</span>
+        <button
+          type="button"
+          (click)="limpiarFiltros()"
+          class="text-xs font-semibold text-blue-500 transition hover:text-blue-700"
+        >
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <!-- Éxito -->
+    @if (exito()) {
+      <div class="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-4" role="status">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-green-100 font-bold text-green-600">✓</span>
+        <p class="flex-1 pt-1 text-sm font-medium text-green-800">{{ exito() }}</p>
+        <button type="button" (click)="exito.set('')" class="text-sm font-semibold text-green-700 transition hover:text-green-900">
+          Cerrar
+        </button>
+      </div>
+    }
+
+    <!-- Error de una acción (activar / desactivar) -->
+    @if (errorAccion()) {
+      <div class="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <p class="flex-1 pt-1 text-sm font-medium text-red-700">{{ errorAccion() }}</p>
+        <button type="button" (click)="errorAccion.set('')" class="text-sm font-semibold text-red-700 transition hover:text-red-900">
+          Cerrar
+        </button>
+      </div>
+    }
+
+    <!-- Error al cargar -->
+    @if (error()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">No se pudieron cargar los usuarios</p>
+          <p class="mt-1 text-sm text-red-600">{{ error() }}</p>
+        </div>
+        <button type="button" (click)="cargar()" class="text-sm font-semibold text-red-700 transition hover:text-red-900">
+          Reintentar
+        </button>
+      </div>
+    }
+
+    <!-- Cargando -->
+    @if (cargando()) {
+      <div class="flex flex-col items-center justify-center px-6 py-16" aria-busy="true">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+        <p class="mt-4 text-sm text-blue-gray-600">Cargando usuarios...</p>
+      </div>
+    } @else if (!error()) {
+      <div class="overflow-x-auto pb-2">
+        <table class="w-full min-w-[900px] table-auto">
+          <thead>
+            <tr>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Usuario</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Correo</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Rol</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Estado</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Creado</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-right text-[11px] font-bold uppercase text-blue-gray-400">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (u of filtrados(); track u.id_usuario) {
+              <tr class="transition hover:bg-gray-50 [&:last-child>td]:border-b-0">
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <div class="flex items-center gap-4">
+                    <span
+                      class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-sm font-bold text-white
+                             bg-gradient-to-tr from-blue-600 to-blue-400"
+                    >
+                      {{ iniciales(u.nombre) }}
+                    </span>
+                    <div>
+                      <p class="text-sm font-semibold text-blue-gray-900">
+                        {{ u.nombre }}
+                        @if (esYo(u)) {
+                          <span class="ml-1 rounded bg-blue-gray-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-gray-600">Tú</span>
+                        }
+                      </p>
+                      <p class="text-xs text-blue-gray-500">&#64;{{ u.usuario }}</p>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <p class="max-w-[220px] truncate text-xs font-medium text-blue-gray-600">
+                    {{ u.correo || 'Sin correo' }}
+                  </p>
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <span
+                    class="inline-block w-fit rounded-md bg-gradient-to-tr px-2 py-0.5 text-[11px] font-medium uppercase text-white"
+                    [class]="u.rol === 'Administrador' ? 'from-gray-900 to-gray-700' : 'from-blue-gray-600 to-blue-gray-400'"
+                  >
+                    {{ u.rol }}
+                  </span>
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <span
+                    class="inline-block w-fit rounded-md bg-gradient-to-tr px-2 py-0.5 text-[11px] font-medium uppercase text-white"
+                    [class]="u.estado ? 'from-green-600 to-green-400' : 'from-gray-500 to-gray-400'"
+                  >
+                    {{ u.estado ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3 text-xs font-medium text-blue-gray-600">
+                  {{ fecha(u.fecha_creacion) }}
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <div class="flex items-center justify-end gap-4">
+                    <button
+                      type="button"
+                      (click)="abrirEditar(u)"
+                      class="text-xs font-semibold text-blue-gray-600 transition hover:text-orange-500"
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="cambiarEstado(u)"
+                      [disabled]="esYo(u) || cambiandoId() !== null"
+                      [title]="esYo(u) ? 'No puedes desactivar tu propio usuario' : ''"
+                      class="text-xs font-semibold text-blue-gray-600 transition hover:text-blue-500
+                             disabled:cursor-not-allowed disabled:text-blue-gray-300 disabled:hover:text-blue-gray-300"
+                    >
+                      {{ u.estado ? 'Desactivar' : 'Activar' }}
+                    </button>
+
+                    <button
+                      type="button"
+                      (click)="pedirEliminar(u)"
+                      [disabled]="esYo(u)"
+                      [title]="esYo(u) ? 'No puedes eliminar tu propio usuario' : ''"
+                      class="text-xs font-semibold text-blue-gray-600 transition hover:text-red-500
+                             disabled:cursor-not-allowed disabled:text-blue-gray-300 disabled:hover:text-blue-gray-300"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="px-6 py-16 text-center">
+                  <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-blue-gray-50 text-2xl text-blue-gray-400">♧</div>
+
+                  @if (usuarios().length === 0) {
+                    <h3 class="mt-4 font-semibold text-blue-gray-900">Todavía no hay usuarios</h3>
+                    <button
+                      type="button"
+                      (click)="abrirCrear()"
+                      class="mt-4 text-sm font-semibold text-blue-500 transition hover:text-blue-700"
+                    >
+                      + Nuevo usuario
+                    </button>
+                  } @else {
+                    <h3 class="mt-4 font-semibold text-blue-gray-900">No se encontraron usuarios</h3>
+                    <p class="mx-auto mt-1 max-w-md text-sm text-blue-gray-600">
+                      Ninguno coincide con la búsqueda o los filtros elegidos.
+                    </p>
+                    <button
+                      type="button"
+                      (click)="limpiarFiltros()"
+                      class="mt-4 text-sm font-semibold text-blue-500 transition hover:text-blue-700"
+                    >
+                      Limpiar filtros
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ===================== Ventana: crear / editar ===================== -->
+<dialog
+  #dlgForm
+  aria-labelledby="usr-titulo"
+  (click)="clicEnFondo($event, dlgForm)"
+  class="m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-xl bg-white p-0 text-gray-700 shadow-xl backdrop:bg-gray-950/60"
+>
+  <form [formGroup]="form" (submit)="guardar(); $event.preventDefault()" novalidate class="flex flex-col">
+    <div class="px-6 pb-2 pt-6">
+      <h2 id="usr-titulo" class="text-base font-semibold text-blue-gray-900">
+        {{ seleccionado() ? 'Editar usuario' : 'Nuevo usuario' }}
+      </h2>
+      <p class="mt-1 text-sm text-blue-gray-600">
+        {{ seleccionado() ? 'Modifica los datos del usuario.' : 'Completa los datos para crear el acceso al sistema.' }}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-x-5 gap-y-1 px-6 py-4 sm:grid-cols-2">
+      @if (errorForm()) {
+        <div class="mb-3 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 sm:col-span-2" role="alert">
+          <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-sm font-bold text-red-600">!</span>
+          <p class="text-sm text-red-700">{{ errorForm() }}</p>
+        </div>
+      }
+
+      <div class="sm:col-span-2">
+        <label for="usr-nombre" class="mb-1 block text-sm font-medium text-blue-gray-700">
+          Nombre completo <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="usr-nombre"
+          type="text"
+          autocomplete="off"
+          autofocus
+          formControlName="nombre"
+          [attr.aria-invalid]="mensaje('nombre') ? 'true' : null"
+          aria-describedby="usr-err-nombre"
+          class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+          [class]="mensaje('nombre') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+        />
+        <p id="usr-err-nombre" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('nombre') }}</p>
+      </div>
+
+      <div>
+        <label for="usr-usuario" class="mb-1 block text-sm font-medium text-blue-gray-700">
+          Usuario <span class="text-red-500">*</span>
+        </label>
+        <input
+          id="usr-usuario"
+          type="text"
+          autocomplete="off"
+          autocapitalize="none"
+          formControlName="usuario"
+          [attr.aria-invalid]="mensaje('usuario') ? 'true' : null"
+          aria-describedby="usr-err-usuario"
+          class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+          [class]="mensaje('usuario') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+        />
+        <p id="usr-err-usuario" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('usuario') }}</p>
+      </div>
+
+      <div>
+        <label for="usr-rol" class="mb-1 block text-sm font-medium text-blue-gray-700">
+          Rol <span class="text-red-500">*</span>
+        </label>
+        <select
+          id="usr-rol"
+          formControlName="rol"
+          class="h-11 w-full rounded-[7px] border border-blue-gray-200 bg-white px-3 text-sm text-gray-700 outline-none transition
+                 focus:border-blue-gray-500 disabled:bg-gray-100 disabled:text-gray-500"
+        >
+          <option value="Gestor">Gestor</option>
+          <option value="Administrador">Administrador</option>
+        </select>
+        <p class="mt-1 min-h-4 text-xs text-blue-gray-500">
+          @if (seleccionado() && esYo(seleccionado()!)) {
+            No puedes cambiar tu propio rol.
+          } @else if (form.controls.rol.value === 'Administrador') {
+            Tiene acceso total al sistema.
+          } @else {
+            Consulta, crea y edita. No elimina ni aprueba.
+          }
+        </p>
+      </div>
+
+      <div class="sm:col-span-2">
+        <label for="usr-correo" class="mb-1 block text-sm font-medium text-blue-gray-700">
+          Correo electrónico <span class="font-normal text-blue-gray-400">(opcional)</span>
+        </label>
+        <input
+          id="usr-correo"
+          type="email"
+          autocomplete="off"
+          formControlName="correo"
+          [attr.aria-invalid]="mensaje('correo') ? 'true' : null"
+          aria-describedby="usr-err-correo"
+          class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+          [class]="mensaje('correo') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+        />
+        <p id="usr-err-correo" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('correo') }}</p>
+      </div>
+
+      <div class="sm:col-span-2 mt-1 flex items-center justify-between border-t border-blue-gray-50 pt-4">
+        <p class="text-sm font-medium text-blue-gray-700">
+          {{ seleccionado() ? 'Cambiar contraseña' : 'Contraseña' }}
+          @if (seleccionado()) {
+            <span class="font-normal text-blue-gray-400">(déjala en blanco para no cambiarla)</span>
+          }
+        </p>
+        <button
+          type="button"
+          (click)="generarClave()"
+          class="text-xs font-semibold text-blue-500 transition hover:text-blue-700"
+        >
+          Generar contraseña
+        </button>
+      </div>
+
+      <div>
+        <label for="usr-password" class="mb-1 block text-sm font-medium text-blue-gray-700">
+          {{ seleccionado() ? 'Nueva contraseña' : 'Contraseña' }}
+          @if (!seleccionado()) {
+            <span class="text-red-500">*</span>
+          }
+        </label>
+        <input
+          id="usr-password"
+          [type]="mostrarClave() ? 'text' : 'password'"
+          autocomplete="new-password"
+          formControlName="password"
+          [attr.aria-invalid]="mensaje('password') ? 'true' : null"
+          aria-describedby="usr-err-password"
+          class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+          [class]="mensaje('password') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+        />
+        <p id="usr-err-password" class="mt-1 min-h-4 text-xs" [class]="mensaje('password') ? 'text-red-600' : 'text-blue-gray-500'">
+          {{ mensaje('password') || 'Entre 8 y 72 caracteres.' }}
+        </p>
+      </div>
+
+      <div>
+        <label for="usr-confirmar" class="mb-1 block text-sm font-medium text-blue-gray-700">
+          Confirmar contraseña
+          @if (!seleccionado()) {
+            <span class="text-red-500">*</span>
+          }
+        </label>
+        <input
+          id="usr-confirmar"
+          [type]="mostrarClave() ? 'text' : 'password'"
+          autocomplete="new-password"
+          formControlName="confirmar"
+          [attr.aria-invalid]="mensaje('confirmar') ? 'true' : null"
+          aria-describedby="usr-err-confirmar"
+          class="h-11 w-full rounded-[7px] border bg-transparent px-3 text-sm text-gray-700 outline-none transition"
+          [class]="mensaje('confirmar') ? 'border-red-400 focus:border-red-500' : 'border-blue-gray-200 focus:border-blue-gray-500'"
+        />
+        <p id="usr-err-confirmar" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('confirmar') }}</p>
+      </div>
+
+      <label class="sm:col-span-2 flex w-fit cursor-pointer items-center gap-2 text-xs text-blue-gray-600">
+        <input
+          type="checkbox"
+          [checked]="mostrarClave()"
+          (change)="mostrarClave.set($any($event.target).checked)"
+          class="h-4 w-4 accent-blue-600"
+        />
+        Mostrar contraseña
+      </label>
+
+      @if (seleccionado()) {
+        <label class="sm:col-span-2 mt-2 flex w-fit cursor-pointer items-center gap-2 text-sm text-blue-gray-700">
+          <input type="checkbox" formControlName="activo" class="h-4 w-4 accent-blue-600 disabled:cursor-not-allowed" />
+          Usuario activo
+          @if (esYo(seleccionado()!)) {
+            <span class="text-xs text-blue-gray-500">(no puedes desactivarte)</span>
+          }
+        </label>
+      }
+    </div>
+
+    <div class="flex flex-col-reverse gap-3 border-t border-blue-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        (click)="dlgForm.close()"
+        class="h-11 rounded-lg px-5 text-xs font-bold uppercase text-gray-600 transition hover:bg-blue-gray-500/10"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        [disabled]="guardando()"
+        class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+               bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg
+               disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ guardando() ? 'Guardando...' : seleccionado() ? 'Guardar cambios' : 'Crear usuario' }}
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===================== Ventana: eliminar ===================== -->
+<dialog
+  #dlgEliminar
+  aria-labelledby="usr-eliminar-titulo"
+  (click)="clicEnFondo($event, dlgEliminar)"
+  class="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl bg-white p-0 text-gray-700 shadow-xl backdrop:bg-gray-950/60"
+>
+  <div class="flex flex-col">
+    <div class="px-6 pb-2 pt-6">
+      <h2 id="usr-eliminar-titulo" class="text-base font-semibold text-blue-gray-900">Eliminar usuario</h2>
+      <p class="mt-2 text-sm text-blue-gray-600">
+        ¿Seguro que quieres eliminar a «<span class="font-semibold text-blue-gray-900">{{ aEliminar()?.nombre }}</span>»?
+        Esta acción no se puede deshacer.
+      </p>
+      <p class="mt-2 text-xs text-blue-gray-500">
+        Si el usuario ya tiene movimientos en el historial no se puede eliminar, pero sí desactivar.
+      </p>
+    </div>
+
+    @if (errorEliminar()) {
+      <div class="mx-6 mt-3 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3" role="alert">
+        <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-sm font-bold text-red-600">!</span>
+        <p class="text-sm text-red-700">{{ errorEliminar() }}</p>
+      </div>
+    }
+
+    <div class="mt-4 flex flex-col-reverse gap-3 border-t border-blue-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+      <button
+        type="button"
+        (click)="dlgEliminar.close()"
+        class="h-11 rounded-lg px-5 text-xs font-bold uppercase text-gray-600 transition hover:bg-blue-gray-500/10"
+      >
+        Cancelar
+      </button>
+
+      @if (errorEliminar() && aEliminar()?.estado) {
+        <button
+          type="button"
+          (click)="desactivarEnSuLugar()"
+          class="h-11 rounded-lg border border-blue-gray-200 px-5 text-xs font-bold uppercase text-blue-gray-700
+                 transition hover:bg-blue-gray-50"
+        >
+          Desactivar en su lugar
+        </button>
+      }
+
+      <button
+        type="button"
+        (click)="confirmarEliminar()"
+        [disabled]="eliminando()"
+        class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+               bg-gradient-to-tr from-red-600 to-red-400 hover:shadow-lg
+               disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ eliminando() ? 'Eliminando...' : 'Sí, eliminar' }}
+      </button>
+    </div>
+  </div>
+</dialog>
