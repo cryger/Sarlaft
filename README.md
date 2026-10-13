@@ -97,8 +97,8 @@ sarlatf/
    ```php
    'db' => [
        'host' => 'localhost',
-       'name' => 'esehsjg18_sistemasarlaft',
-       'user' => 'root',        // XAMPP
+       'name' => '',
+       'user' => '',        // XAMPP
        'pass' => '',            // XAMPP viene sin clave
    ],
    'jwt'  => ['secret' => 'una-clave-larga-y-aleatoria-de-mas-de-40-caracteres'],
