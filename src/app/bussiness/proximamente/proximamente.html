@@ -1,0 +1,30 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+    <div
+      class="relative -mt-6 mx-4 mb-6 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+    >
+      <h6 class="text-base font-semibold">{{ titulo }}</h6>
+    </div>
+
+    <div class="flex flex-col items-center px-6 pb-12 pt-6 text-center">
+      <div class="grid h-14 w-14 place-items-center rounded-full bg-blue-gray-50 text-2xl text-blue-gray-500">
+        ◷
+      </div>
+
+      <h3 class="mt-4 font-semibold text-blue-gray-900">Este módulo aún no está disponible</h3>
+
+      <p class="mt-1 max-w-md text-sm text-blue-gray-600">
+        Estamos construyendo «{{ titulo }}». Mientras tanto, puedes seguir trabajando desde el dashboard.
+      </p>
+
+      <a
+        routerLink="/dashboard"
+        class="mt-6 rounded-lg px-5 py-3 text-xs font-bold uppercase text-white shadow-md transition
+               bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg"
+      >
+        Volver al dashboard
+      </a>
+    </div>
+  </div>
+</div>

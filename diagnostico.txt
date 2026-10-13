@@ -1,0 +1,2117 @@
+﻿=== ARBOL src ===
+src\index.html
+src\main.server.ts
+src\main.ts
+src\server.ts
+src\styles.css
+src\app\app.config.server.ts
+src\app\app.config.ts
+src\app\app.css
+src\app\app.html
+src\app\app.routes.server.ts
+src\app\app.routes.ts
+src\app\app.spec.ts
+src\app\app.ts
+src\app\bussiness\dashboard\dashboard.css
+src\app\bussiness\dashboard\dashboard.html
+src\app\bussiness\dashboard\dashboard.spec.ts
+src\app\bussiness\dashboard\dashboard.ts
+src\app\bussiness\profile\profile.css
+src\app\bussiness\profile\profile.html
+src\app\bussiness\profile\profile.spec.ts
+src\app\bussiness\profile\profile.ts
+src\app\bussiness\tables\tables.css
+src\app\bussiness\tables\tables.html
+src\app\bussiness\tables\tables.spec.ts
+src\app\bussiness\tables\tables.ts
+src\app\bussiness\tables\declarantes\declarantes.css
+src\app\bussiness\tables\declarantes\declarantes.html
+src\app\bussiness\tables\declarantes\declarantes.spec.ts
+src\app\bussiness\tables\declarantes\declarantes.ts
+src\app\shared\components\footer\footer.css
+src\app\shared\components\footer\footer.html
+src\app\shared\components\footer\footer.spec.ts
+src\app\shared\components\footer\footer.ts
+src\app\shared\components\header\header.css
+src\app\shared\components\header\header.html
+src\app\shared\components\header\header.spec.ts
+src\app\shared\components\header\header.ts
+src\app\shared\components\layout\layout.css
+src\app\shared\components\layout\layout.html
+src\app\shared\components\layout\layout.spec.ts
+src\app\shared\components\layout\layout.ts
+src\app\shared\components\sidebar\sidebar.css
+src\app\shared\components\sidebar\sidebar.html
+src\app\shared\components\sidebar\sidebar.spec.ts
+src\app\shared\components\sidebar\sidebar.ts
+src\app\shared\components\stat-card\stat-card.css
+src\app\shared\components\stat-card\stat-card.html
+src\app\shared\components\stat-card\stat-card.spec.ts
+src\app\shared\components\stat-card\stat-card.ts
+src\app\shared\services\declarantes.spec.ts
+src\app\shared\services\declarantes.ts
+
+=== package.json ===
+{
+  "name": "sarlatf",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "serve:ssr:sarlatf": "node dist/sarlatf/server/server.mjs"
+  },
+  "private": true,
+  "packageManager": "npm@10.1.0",
+  "dependencies": {
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
+    "@angular/platform-browser": "^22.2.0",
+    "@angular/platform-server": "^22.2.0",
+    "@angular/router": "^22.2.0",
+    "@angular/ssr": "^22.2.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "express": "^5.1.0",
+    "postcss": "^8.5.29",
+    "rxjs": "~7.8.0",
+    "tailwindcss": "^4.3.3",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.2.1",
+    "@angular/cli": "^22.2.1",
+    "@angular/compiler-cli": "^22.2.0",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.12.0",
+    "jsdom": "^30.0.0",
+    "prettier": "^3.8.1",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.0"
+  }
+}
+
+
+=== .postcssrc.json ===
+NO EXISTE
+
+=== angular.json ===
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "packageManager": "npm",
+    "analytics": false
+  },
+  "newProjectRoot": "projects",
+  "projects": {
+    "sarlatf": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.css"
+            ],
+            "server": "src/main.server.ts",
+            "outputMode": "server",
+            "security": {
+              "allowedHosts": []
+            },
+            "ssr": {
+              "entry": "src/server.ts"
+            }
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "sarlatf:build:production"
+            },
+            "development": {
+              "buildTarget": "sarlatf:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
+        }
+      }
+    }
+  }
+}
+
+
+=== src\styles.css ===
+/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss" important;
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+
+=== src\index.html ===
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sarlatf</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+
+
+=== src\app\bussiness\dashboard\dashboard.css ===
+
+=== src\app\bussiness\dashboard\dashboard.html ===
+<div class="mt-12">
+  <!-- Corte -->
+  <p class="mb-6 text-right text-sm text-blue-gray-600">
+    Corte: <span class="font-semibold text-blue-gray-900">7 de octubre de 2026</span>
+  </p>
+
+  <!-- Indicadores -->
+  <div class="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+    @for (i of indicadores; track i.titulo) {
+      <app-stat-card
+        [titulo]="i.titulo"
+        [valor]="i.valor"
+        [icono]="i.icono"
+        [descripcion]="i.descripcion"
+      />
+    }
+  </div>
+
+  <div class="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
+    <!-- Actividad reciente -->
+    <div class="overflow-hidden rounded-xl border border-blue-gray-50 bg-white shadow-sm xl:col-span-2">
+      <div class="flex items-center justify-between p-6">
+        <div>
+          <h6 class="mb-1 text-base font-semibold text-blue-gray-900">Actividad reciente</h6>
+          <p class="text-sm text-blue-gray-600">Ãšltimos registros del sistema</p>
+        </div>
+
+        <a
+          routerLink="/historial"
+          class="text-sm font-semibold text-blue-gray-600 transition-colors hover:text-blue-500"
+        >
+          Ver historial â†’
+        </a>
+      </div>
+
+      <div class="overflow-x-auto pb-2">
+        <table class="w-full min-w-[600px] table-auto">
+          <thead>
+            <tr>
+              @for (col of ['tipo', 'consecutivo', 'fecha', 'estado']; track col) {
+                <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">
+                  {{ col }}
+                </th>
+              }
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (a of actividad; track a.consecutivo) {
+              <tr class="[&:last-child>td]:border-b-0">
+                <td class="border-b border-blue-gray-50 px-6 py-3 text-xs font-medium text-blue-gray-600">
+                  {{ a.tipo }}
+                </td>
+                <td class="border-b border-blue-gray-50 px-6 py-3 text-sm font-bold text-blue-gray-900">
+                  {{ a.consecutivo }}
+                </td>
+                <td class="border-b border-blue-gray-50 px-6 py-3 text-xs font-medium text-blue-gray-600">
+                  {{ a.fecha }}
+                </td>
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <span
+                    class="inline-block w-fit rounded-md bg-gradient-to-tr px-2 py-0.5 text-[11px] font-medium uppercase text-white"
+                    [class]="estilosEstado[a.estado]"
+                  >
+                    {{ a.estado }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Resumen operativo -->
+    <div class="rounded-xl border border-blue-gray-50 bg-white p-6 shadow-sm">
+      <h6 class="mb-1 text-base font-semibold text-blue-gray-900">Resumen operativo</h6>
+      <p class="text-sm text-blue-gray-600">Estado de los registros recientes</p>
+
+      <div class="mt-6 space-y-5">
+        @for (r of resumen; track r.etiqueta) {
+          <div>
+            <div class="mb-1 flex justify-between text-xs font-medium text-blue-gray-600">
+              <span>{{ r.etiqueta }}</span>
+              <span class="font-bold text-blue-gray-900">{{ r.valor }}</span>
+            </div>
+
+            <div class="flex h-1 w-full overflow-hidden rounded-sm bg-blue-gray-50">
+              <div
+                class="h-full bg-gradient-to-tr from-blue-600 to-blue-400"
+                [style.width.%]="r.porcentaje"
+              ></div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="mt-6 rounded-xl border border-amber-100 bg-amber-50 p-4">
+        <p class="font-semibold text-amber-800">{{ pendientes }} registros pendientes</p>
+        <p class="mt-1 text-xs text-amber-600">En la muestra de actividad reciente</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+=== src\app\bussiness\dashboard\dashboard.ts ===
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { StatCard } from '../../shared/components/stat-card/stat-card';
+
+interface Indicador {
+  titulo: string;
+  valor: number;
+  icono: string;
+  descripcion: string;
+}
+
+interface Actividad {
+  tipo: string;
+  consecutivo: string;
+  fecha: string;
+  estado: 'Pendiente' | 'Aprobado' | 'Rechazado';
+}
+
+interface ResumenItem {
+  etiqueta: string;
+  valor: number;
+  porcentaje: number;
+}
+
+@Component({
+  selector: 'app-dashboard',
+  imports: [RouterLink,StatCard],
+  templateUrl: './dashboard.html',
+})
+export class Dashboard {
+  indicadores: Indicador[] = [
+    { titulo: 'Declarantes', valor: 125, icono: 'â™™', descripcion: 'Registrados en el sistema' },
+    { titulo: 'Transacciones en efectivo', valor: 28, icono: '$', descripcion: 'Requieren seguimiento' },
+    { titulo: 'Ausencias registradas', valor: 16, icono: 'â–£', descripcion: 'Declaraciones de ausencia' },
+    { titulo: 'Reportes ROS', valor: 9, icono: 'â–¤', descripcion: 'Reportes registrados' },
+  ];
+
+  actividad: Actividad[] = [
+    { tipo: 'TransacciÃ³n', consecutivo: 'TE-0001', fecha: '07/10/2026', estado: 'Pendiente' },
+    { tipo: 'ROS', consecutivo: 'ROS-0002', fecha: '06/10/2026', estado: 'Pendiente' },
+    { tipo: 'Ausencia', consecutivo: 'AT-0003', fecha: '05/10/2026', estado: 'Aprobado' },
+    { tipo: 'TransacciÃ³n', consecutivo: 'TE-0004', fecha: '04/10/2026', estado: 'Rechazado' },
+  ];
+
+  resumen: ResumenItem[] = [
+    { etiqueta: 'Transacciones en efectivo', valor: 28, porcentaje: 55 },
+    { etiqueta: 'Ausencias registradas', valor: 16, porcentaje: 35 },
+    { etiqueta: 'Reportes ROS', valor: 9, porcentaje: 20 },
+  ];
+
+  estilosEstado: Record<string, string> = {
+    Pendiente: 'from-orange-600 to-orange-400',
+    Aprobado: 'from-green-600 to-green-400',
+    Rechazado: 'from-red-600 to-red-400',
+  };
+
+  get pendientes(): number {
+    return this.actividad.filter((a) => a.estado === 'Pendiente').length;
+  }
+}
+
+
+=== src\app\bussiness\profile\profile.css ===
+
+=== src\app\bussiness\profile\profile.html ===
+<p>profile works!</p>
+
+
+=== src\app\bussiness\profile\profile.ts ===
+import { Component } from '@angular/core';
+
+@Component({
+  imports: [],
+  selector: 'app-profile',
+  styleUrl: './profile.css',
+  templateUrl: './profile.html',
+})
+export class Profile {}
+
+
+=== src\app\bussiness\tables\declarantes\declarantes.css ===
+:host {
+  display: block;
+}
+
+
+=== src\app\bussiness\tables\declarantes\declarantes.html ===
+<div class="space-y-6">
+
+  <!-- ============================================ -->
+  <!-- ENCABEZADO                                   -->
+  <!-- ============================================ -->
+
+  <div
+    class="
+      flex
+      flex-col
+      gap-4
+      md:flex-row
+      md:items-center
+      md:justify-between
+    "
+  >
+
+    <div>
+
+      <div class="mb-2 flex items-center gap-2 text-sm">
+
+        <a
+          routerLink="/dashboard"
+          class="text-gray-400 transition hover:text-blue-600"
+        >
+          Inicio
+        </a>
+
+        <span class="text-gray-300">
+          /
+        </span>
+
+        <span class="font-medium text-gray-700">
+          Declarantes
+        </span>
+
+      </div>
+
+
+      <h1
+        class="
+          text-2xl
+          font-bold
+          tracking-tight
+          text-gray-900
+        "
+      >
+        Declarantes
+      </h1>
+
+
+      <p class="mt-1 text-sm text-gray-500">
+        GestiÃ³n y consulta de los declarantes registrados en SARLAFT.
+      </p>
+
+    </div>
+
+
+    <!-- Nuevo declarante -->
+
+    <a
+      routerLink="/declarantes/nuevo"
+      class="
+        inline-flex
+        items-center
+        justify-center
+        gap-2
+        rounded-lg
+        bg-gradient-to-tr
+        from-blue-600
+        to-blue-400
+        px-5
+        py-3
+        text-sm
+        font-semibold
+        text-white
+        shadow-md
+        shadow-blue-500/20
+        transition
+        hover:shadow-lg
+        hover:shadow-blue-500/30
+      "
+    >
+
+      <span class="text-lg">
+        +
+      </span>
+
+      Nuevo declarante
+
+    </a>
+
+  </div>
+
+
+
+  <!-- ============================================ -->
+  <!-- TARJETA PRINCIPAL                            -->
+  <!-- ============================================ -->
+
+  <div
+    class="
+      overflow-hidden
+      rounded-xl
+      bg-white
+      shadow-md
+    "
+  >
+
+    <!-- ========================================== -->
+    <!-- BARRA SUPERIOR                             -->
+    <!-- ========================================== -->
+
+    <div
+      class="
+        flex
+        flex-col
+        gap-4
+        border-b
+        border-gray-100
+        p-6
+        lg:flex-row
+        lg:items-center
+        lg:justify-between
+      "
+    >
+
+      <div>
+
+        <h2
+          class="
+            text-lg
+            font-semibold
+            text-gray-900
+          "
+        >
+          Lista de declarantes
+        </h2>
+
+        <p
+          class="
+            mt-1
+            text-sm
+            text-gray-500
+          "
+        >
+          {{ declarantesFiltrados.length }} registros encontrados
+        </p>
+
+      </div>
+
+
+      <!-- Buscador -->
+
+      <div class="relative w-full lg:w-80">
+
+        <span
+          class="
+            pointer-events-none
+            absolute
+            left-3
+            top-1/2
+            -translate-y-1/2
+            text-gray-400
+          "
+        >
+          âŒ•
+        </span>
+
+
+        <input
+          type="search"
+          [(ngModel)]="terminoBusqueda"
+          (input)="buscar()"
+          placeholder="Buscar declarante..."
+          class="
+            h-11
+            w-full
+            rounded-lg
+            border
+            border-gray-200
+            bg-gray-50
+            pl-10
+            pr-10
+            text-sm
+            text-gray-700
+            outline-none
+            transition
+            placeholder:text-gray-400
+            focus:border-blue-500
+            focus:bg-white
+            focus:ring-2
+            focus:ring-blue-100
+          "
+        />
+
+
+        @if (terminoBusqueda) {
+
+          <button
+            type="button"
+            (click)="limpiarBusqueda()"
+            class="
+              absolute
+              right-3
+              top-1/2
+              -translate-y-1/2
+              text-gray-400
+              transition
+              hover:text-gray-700
+            "
+          >
+            Ã—
+          </button>
+
+        }
+
+      </div>
+
+    </div>
+
+
+
+    <!-- ========================================== -->
+    <!-- ERROR                                      -->
+    <!-- ========================================== -->
+
+    @if (error) {
+
+      <div class="mx-6 mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+
+        <div class="flex items-center gap-3">
+
+          <span
+            class="
+              grid
+              h-9
+              w-9
+              shrink-0
+              place-items-center
+              rounded-full
+              bg-red-100
+              font-bold
+              text-red-600
+            "
+          >
+            !
+          </span>
+
+          <div>
+
+            <p class="font-semibold text-red-800">
+              No se pudieron cargar los declarantes
+            </p>
+
+            <p class="mt-1 text-sm text-red-600">
+              {{ error }}
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    }
+
+
+
+    <!-- ========================================== -->
+    <!-- CARGANDO                                   -->
+    <!-- ========================================== -->
+
+    @if (cargando) {
+
+      <div class="p-12">
+
+        <div class="flex flex-col items-center justify-center">
+
+          <div
+            class="
+              h-10
+              w-10
+              animate-spin
+              rounded-full
+              border-4
+              border-gray-200
+              border-t-blue-600
+            "
+          ></div>
+
+          <p class="mt-4 text-sm text-gray-500">
+            Cargando declarantes...
+          </p>
+
+        </div>
+
+      </div>
+
+    }
+
+
+
+    <!-- ========================================== -->
+    <!-- TABLA                                     -->
+    <!-- ========================================== -->
+
+    @if (!cargando) {
+
+      <div class="overflow-x-auto">
+
+        <table class="w-full min-w-[1100px] table-auto">
+
+          <!-- CABECERA -->
+
+          <thead>
+
+            <tr
+              class="
+                border-y
+                border-gray-100
+                bg-gray-50
+              "
+            >
+
+              <th
+                class="
+                  px-6
+                  py-4
+                  text-left
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-gray-400
+                "
+              >
+                Documento
+              </th>
+
+
+              <th
+                class="
+                  px-6
+                  py-4
+                  text-left
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-gray-400
+                "
+              >
+                Nombre
+              </th>
+
+
+              <th
+                class="
+                  px-6
+                  py-4
+                  text-left
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-gray-400
+                "
+              >
+                Cargo
+              </th>
+
+
+              <th
+                class="
+                  px-6
+                  py-4
+                  text-left
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-gray-400
+                "
+              >
+                Dependencia
+              </th>
+
+
+              <th
+                class="
+                  px-6
+                  py-4
+                  text-left
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-gray-400
+                "
+              >
+                Contacto
+              </th>
+
+
+              <th
+                class="
+                  px-6
+                  py-4
+                  text-right
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-gray-400
+                "
+              >
+                Acciones
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+
+          <!-- CUERPO -->
+
+          <tbody>
+
+            @for (
+              declarante of declarantesFiltrados;
+              track declarante.id_declarante
+            ) {
+
+              <tr
+                class="
+                  border-b
+                  border-gray-100
+                  transition
+                  last:border-0
+                  hover:bg-gray-50
+                "
+              >
+
+                <!-- Documento -->
+
+                <td class="px-6 py-5">
+
+                  <div>
+
+                    <p
+                      class="
+                        text-sm
+                        font-semibold
+                        text-gray-800
+                      "
+                    >
+                      {{ declarante.tipo_documento }}
+                    </p>
+
+                    <p
+                      class="
+                        mt-1
+                        text-sm
+                        text-gray-500
+                      "
+                    >
+                      {{ declarante.numero_documento }}
+                    </p>
+
+                  </div>
+
+                </td>
+
+
+
+                <!-- Nombre -->
+
+                <td class="px-6 py-5">
+
+                  <div class="flex items-center gap-3">
+
+                    <div
+                      class="
+                        grid
+                        h-10
+                        w-10
+                        shrink-0
+                        place-items-center
+                        rounded-full
+                        bg-blue-50
+                        text-sm
+                        font-bold
+                        text-blue-600
+                      "
+                    >
+                      {{ declarante.nombre?.charAt(0) || '?' }}
+                    </div>
+
+
+                    <div>
+
+                      <p
+                        class="
+                          text-sm
+                          font-semibold
+                          text-gray-800
+                        "
+                      >
+                        {{ declarante.nombre }}
+                      </p>
+
+                      <p
+                        class="
+                          mt-1
+                          text-xs
+                          text-gray-400
+                        "
+                      >
+                        ID #{{ declarante.id_declarante }}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+                </td>
+
+
+
+                <!-- Cargo -->
+
+                <td class="px-6 py-5">
+
+                  <p class="text-sm text-gray-600">
+                    {{ declarante.cargo || 'No registrado' }}
+                  </p>
+
+                </td>
+
+
+
+                <!-- Dependencia -->
+
+                <td class="px-6 py-5">
+
+                  <span
+                    class="
+                      inline-flex
+                      rounded-lg
+                      bg-gray-100
+                      px-3
+                      py-1.5
+                      text-xs
+                      font-medium
+                      text-gray-600
+                    "
+                  >
+                    {{ declarante.dependencia || 'Sin dependencia' }}
+                  </span>
+
+                </td>
+
+
+
+                <!-- Contacto -->
+
+                <td class="px-6 py-5">
+
+                  <div>
+
+                    <p
+                      class="
+                        max-w-[220px]
+                        truncate
+                        text-sm
+                        text-gray-600
+                      "
+                    >
+                      {{ declarante.correo || 'Sin correo' }}
+                    </p>
+
+                    <p
+                      class="
+                        mt-1
+                        text-xs
+                        text-gray-400
+                      "
+                    >
+                      {{ declarante.telefono || 'Sin telÃ©fono' }}
+                    </p>
+
+                  </div>
+
+                </td>
+
+
+
+                <!-- Acciones -->
+
+                <td class="px-6 py-5">
+
+                  <div
+                    class="
+                      flex
+                      justify-end
+                      gap-2
+                    "
+                  >
+
+                    <!-- Ver -->
+
+                    <a
+                      [routerLink]="[
+                        '/declarantes',
+                        declarante.id_declarante
+                      ]"
+                      title="Ver declarante"
+                      class="
+                        grid
+                        h-9
+                        w-9
+                        place-items-center
+                        rounded-lg
+                        border
+                        border-gray-200
+                        bg-white
+                        text-gray-500
+                        transition
+                        hover:border-blue-200
+                        hover:bg-blue-50
+                        hover:text-blue-600
+                      "
+                    >
+                      ðŸ‘
+                    </a>
+
+
+                    <!-- Editar -->
+
+                    <a
+                      [routerLink]="[
+                        '/declarantes',
+                        declarante.id_declarante,
+                        'editar'
+                      ]"
+                      title="Editar declarante"
+                      class="
+                        grid
+                        h-9
+                        w-9
+                        place-items-center
+                        rounded-lg
+                        border
+                        border-gray-200
+                        bg-white
+                        text-gray-500
+                        transition
+                        hover:border-amber-200
+                        hover:bg-amber-50
+                        hover:text-amber-600
+                      "
+                    >
+                      âœŽ
+                    </a>
+
+
+                    <!-- Eliminar -->
+
+                    <button
+                      type="button"
+                      title="Eliminar declarante"
+                      (click)="eliminar(declarante.id_declarante)"
+                      class="
+                        grid
+                        h-9
+                        w-9
+                        place-items-center
+                        rounded-lg
+                        border
+                        border-gray-200
+                        bg-white
+                        text-gray-500
+                        transition
+                        hover:border-red-200
+                        hover:bg-red-50
+                        hover:text-red-600
+                      "
+                    >
+                      ðŸ—‘
+                    </button>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            }
+
+
+            <!-- SIN RESULTADOS -->
+
+            @if (declarantesFiltrados.length === 0) {
+
+              <tr>
+
+                <td
+                  colspan="6"
+                  class="px-6 py-16 text-center"
+                >
+
+                  <div
+                    class="
+                      mx-auto
+                      grid
+                      h-16
+                      w-16
+                      place-items-center
+                      rounded-full
+                      bg-gray-100
+                      text-2xl
+                      text-gray-400
+                    "
+                  >
+                    â™™
+                  </div>
+
+
+                  <h3
+                    class="
+                      mt-4
+                      font-semibold
+                      text-gray-800
+                    "
+                  >
+                    No se encontraron declarantes
+                  </h3>
+
+
+                  <p
+                    class="
+                      mx-auto
+                      mt-1
+                      max-w-md
+                      text-sm
+                      text-gray-500
+                    "
+                  >
+                    No existen registros que coincidan con la bÃºsqueda.
+                  </p>
+
+
+                  @if (terminoBusqueda) {
+
+                    <button
+                      type="button"
+                      (click)="limpiarBusqueda()"
+                      class="
+                        mt-4
+                        text-sm
+                        font-semibold
+                        text-blue-600
+                        hover:text-blue-800
+                      "
+                    >
+                      Limpiar bÃºsqueda
+                    </button>
+
+                  }
+
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    }
+
+
+
+    <!-- ========================================== -->
+    <!-- PIE DE TABLA                              -->
+    <!-- ========================================== -->
+
+    @if (!cargando && declarantesFiltrados.length > 0) {
+
+      <div
+        class="
+          flex
+          flex-col
+          gap-3
+          border-t
+          border-gray-100
+          px-6
+          py-4
+          sm:flex-row
+          sm:items-center
+          sm:justify-between
+        "
+      >
+
+        <p class="text-sm text-gray-500">
+
+          Mostrando
+
+          <span class="font-semibold text-gray-700">
+            {{ declarantesFiltrados.length }}
+          </span>
+
+          declarantes
+
+        </p>
+
+
+        <!-- PaginaciÃ³n -->
+        <div class="flex items-center gap-1">
+
+          <button
+            type="button"
+            disabled
+            class="
+              grid
+              h-9
+              w-9
+              place-items-center
+              rounded-lg
+              border
+              border-gray-200
+              text-gray-300
+            "
+          >
+            â€¹
+          </button>
+
+
+          <button
+            type="button"
+            class="
+              grid
+              h-9
+              w-9
+              place-items-center
+              rounded-lg
+              bg-blue-600
+              text-sm
+              font-semibold
+              text-white
+            "
+          >
+            1
+          </button>
+
+
+          <button
+            type="button"
+            class="
+              grid
+              h-9
+              w-9
+              place-items-center
+              rounded-lg
+              border
+              border-gray-200
+              text-gray-500
+              transition
+              hover:bg-gray-50
+            "
+          >
+            2
+          </button>
+
+
+          <button
+            type="button"
+            class="
+              grid
+              h-9
+              w-9
+              place-items-center
+              rounded-lg
+              border
+              border-gray-200
+              text-gray-500
+              transition
+              hover:bg-gray-50
+            "
+          >
+            3
+          </button>
+
+
+          <button
+            type="button"
+            class="
+              grid
+              h-9
+              w-9
+              place-items-center
+              rounded-lg
+              border
+              border-gray-200
+              text-gray-500
+              transition
+              hover:bg-gray-50
+            "
+          >
+            â€º
+          </button>
+
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+
+</div>
+
+
+=== src\app\bussiness\tables\declarantes\declarantes.ts ===
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+
+import {
+  DeclarantesService,
+  Declarante
+} from '../../../shared/services/declarantes';
+
+@Component({
+  selector: 'app-declarantes',
+  standalone: true,
+  imports: [
+    FormsModule,
+    RouterLink
+  ],
+  templateUrl: './declarantes.html',
+  styleUrl: './declarantes.css'
+})
+export class DeclarantesComponent implements OnInit {
+
+  declarantes: Declarante[] = [];
+
+  declarantesFiltrados: Declarante[] = [];
+
+  cargando = false;
+
+  terminoBusqueda = '';
+
+  error = '';
+
+
+  constructor(
+    private declarantesService: DeclarantesService
+  ) {}
+
+
+  ngOnInit(): void {
+    this.cargarDeclarantes();
+  }
+
+
+  cargarDeclarantes(): void {
+
+    this.cargando = true;
+
+    this.error = '';
+
+    this.declarantesService.listar().subscribe({
+
+      next: (respuesta) => {
+
+        if (respuesta.success) {
+
+          this.declarantes = respuesta.data;
+
+          this.declarantesFiltrados = [
+            ...respuesta.data
+          ];
+
+        } else {
+
+          this.declarantes = [];
+
+          this.declarantesFiltrados = [];
+
+          this.error =
+            respuesta.message ??
+            'No fue posible cargar los declarantes.';
+
+        }
+
+        this.cargando = false;
+
+      },
+
+      error: (error) => {
+
+        console.error(
+          'Error cargando declarantes:',
+          error
+        );
+
+        this.error =
+          'No fue posible conectarse con el servidor.';
+
+        this.cargando = false;
+
+      }
+
+    });
+
+  }
+
+
+  buscar(): void {
+
+    const termino =
+      this.terminoBusqueda
+        .trim()
+        .toLowerCase();
+
+
+    if (!termino) {
+
+      this.declarantesFiltrados = [
+        ...this.declarantes
+      ];
+
+      return;
+    }
+
+
+    this.declarantesFiltrados =
+      this.declarantes.filter(declarante =>
+
+        declarante.nombre
+          .toLowerCase()
+          .includes(termino)
+
+        ||
+
+        declarante.numero_documento
+          .toLowerCase()
+          .includes(termino)
+
+        ||
+
+        declarante.cargo
+          .toLowerCase()
+          .includes(termino)
+
+        ||
+
+        (declarante.dependencia ?? '')
+          .toLowerCase()
+          .includes(termino)
+
+        ||
+
+        (declarante.correo ?? '')
+          .toLowerCase()
+          .includes(termino)
+
+      );
+
+  }
+
+
+  limpiarBusqueda(): void {
+
+    this.terminoBusqueda = '';
+
+    this.declarantesFiltrados = [
+      ...this.declarantes
+    ];
+
+  }
+
+
+  eliminar(id: number): void {
+
+    const confirmar = window.confirm(
+      'Â¿EstÃ¡ seguro de eliminar este declarante?'
+    );
+
+
+    if (!confirmar) {
+      return;
+    }
+
+
+    this.declarantesService
+      .eliminar(id)
+      .subscribe({
+
+        next: (respuesta) => {
+
+          if (respuesta.success) {
+
+            this.cargarDeclarantes();
+
+          } else {
+
+            this.error =
+              respuesta.message ??
+              'No fue posible eliminar el declarante.';
+
+          }
+
+        },
+
+        error: (error) => {
+
+          console.error(error);
+
+          this.error =
+            'OcurriÃ³ un error al eliminar el declarante.';
+
+        }
+
+      });
+
+  }
+
+}
+
+
+=== src\app\bussiness\tables\tables.css ===
+
+=== src\app\bussiness\tables\tables.html ===
+<p>tables works!</p>
+
+
+=== src\app\bussiness\tables\tables.ts ===
+import { Component } from '@angular/core';
+
+@Component({
+  imports: [],
+  selector: 'app-tables',
+  styleUrl: './tables.css',
+  templateUrl: './tables.html',
+})
+export class Tables {}
+
+
+=== src\app\shared\components\footer\footer.css ===
+
+=== src\app\shared\components\footer\footer.html ===
+<footer class="mt-10 border-t border-gray-200 py-5">
+  <div class="flex flex-col justify-between gap-3 text-sm text-gray-500 sm:flex-row sm:items-center">
+    <p>
+      Â© 2026 SARLAFT Â· Sistema de Administracion del Riesgo - Lavado de activos y Financiacion del Terrorismo.
+    </p>
+
+    <div class="flex items-center gap-4">
+      <span class="flex items-center gap-2">
+        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+        Interfaz disponible
+      </span>
+
+      <span>VersiÃ³n 1.0.0</span>
+    </div>
+  </div>
+</footer>
+
+
+=== src\app\shared\components\footer\footer.ts ===
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-footer',
+  standalone: true,
+  templateUrl: './footer.html'
+})
+export class Footer {}
+
+
+=== src\app\shared\components\header\header.css ===
+
+=== src\app\shared\components\header\header.html ===
+<nav class="w-full rounded-xl py-1">
+  <div class="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
+    <!-- Breadcrumb + tÃ­tulo -->
+    <div>
+      <div class="mb-1 flex items-center text-sm">
+        <a routerLink="/dashboard" class="text-blue-900 opacity-50 transition-all hover:text-blue-500 hover:opacity-100">
+          Dashboard
+        </a>
+        <span class="mx-2 select-none text-gray-500">/</span>
+        <span class="text-blue-gray-900">{{ titulo() }}</span>
+      </div>
+      <h6 class="text-base font-semibold text-gray-900">{{ titulo() }}</h6>
+    </div>
+
+    <!-- Herramientas -->
+    <div class="flex items-center">
+      <div class="mr-auto md:mr-4">
+        <input
+          type="search"
+          placeholder="Buscar"
+          class="h-12 w-full min-w-[200px] rounded-[7px] border border-blue-gray-200
+                 bg-transparent px-3 text-sm text-gray-700 outline-none transition-all
+                 placeholder:text-gray-500 focus:border-blue-gray-500 md:w-56"
+        />
+      </div>
+
+      <button
+        type="button"
+        aria-label="Abrir menÃº"
+        (click)="abrirMenu()"
+        class="grid h-10 w-10 place-items-center rounded-lg text-xl text-gray-500 hover:bg-blue-gray-500/10 xl:hidden"
+      >
+        â˜°
+      </button>
+
+      <button
+        type="button"
+        class="hidden items-center gap-1.5 rounded-lg px-4 py-3 text-xs font-bold uppercase
+               text-gray-500 hover:bg-blue-gray-500/10 xl:flex"
+      >
+        <span class="text-lg leading-none text-blue-gray-500">â™™</span>
+        Administrador
+      </button>
+
+      <button
+        type="button"
+        aria-label="Notificaciones"
+        class="relative grid h-10 w-10 place-items-center rounded-lg text-lg text-blue-gray-500
+               hover:bg-blue-gray-500/10"
+      >
+        â™§
+        <span class="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span>
+      </button>
+
+      <button
+        type="button"
+        aria-label="ConfiguraciÃ³n"
+        class="grid h-10 w-10 place-items-center rounded-lg text-lg text-blue-gray-500
+               hover:bg-blue-gray-500/10"
+      >
+        âš™
+      </button>
+    </div>
+  </div>
+</nav>
+
+
+=== src\app\shared\components\header\header.ts ===
+import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { filter } from 'rxjs';
+
+@Component({
+  selector: 'app-header',
+  imports: [RouterLink],
+  templateUrl: './header.html',
+})
+export class Header {
+  @Output() menuToggle = new EventEmitter<void>();
+
+  private router = inject(Router);
+  titulo = signal('Dashboard');
+
+  constructor() {
+    this.router.events
+      .pipe(filter((e) => e instanceof NavigationEnd), takeUntilDestroyed())
+      .subscribe(() => {
+        let ruta = this.router.routerState.snapshot.root;
+        while (ruta.firstChild) ruta = ruta.firstChild;
+        this.titulo.set(ruta.data['titulo'] ?? 'Dashboard');
+      });
+  }
+
+  abrirMenu() {
+    this.menuToggle.emit();
+  }
+}
+
+
+=== src\app\shared\components\layout\layout.css ===
+
+=== src\app\shared\components\layout\layout.html ===
+<div class="min-h-screen bg-slate-50">
+
+  <div class="flex min-h-screen">
+
+    <!-- SIDEBAR -->
+    <aside
+      class="
+        hidden
+        w-[310px]
+        shrink-0
+        lg:block
+      "
+    >
+      <app-sidebar></app-sidebar>
+    </aside>
+
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="flex min-w-0 flex-1 flex-col">
+
+      <!-- HEADER -->
+      <app-header></app-header>
+
+
+      <!-- CONTENIDO -->
+      <main
+        class="
+          flex-1
+          px-4
+          py-6
+          sm:px-6
+          lg:px-8
+          xl:px-10
+        "
+      >
+
+        <router-outlet></router-outlet>
+
+      </main>
+
+
+      <!-- FOOTER -->
+      <app-footer></app-footer>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+=== src\app\shared\components\layout\layout.ts ===
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+import { Header } from '../header/header';
+import { Sidebar } from '../sidebar/sidebar';
+import { Footer } from '../footer/footer';
+
+@Component({
+  selector: 'app-layout',
+  standalone: true,
+  imports: [
+    RouterOutlet,
+    Header,
+    Sidebar,
+    Footer
+  ],
+  templateUrl: './layout.html'
+})
+export class Layout {}
+
+
+=== src\app\shared\components\sidebar\sidebar.css ===
+
+=== src\app\shared\components\sidebar\sidebar.html ===
+<aside
+  class="fixed inset-0 z-50 my-4 ml-4 flex h-[calc(100vh-32px)] w-72 flex-col
+         rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 text-white
+         transition-transform duration-300 xl:translate-x-0"
+  [class.translate-x-0]="open"
+  [class.-translate-x-80]="!open"
+>
+  <!-- Marca -->
+  <div class="border-b border-white/20">
+    <a routerLink="/dashboard" (click)="cerrarMenu()" class="block px-8 py-6 text-center">
+      <h6 class="text-base font-semibold text-white">SARLAFT</h6>
+      <p class="mt-0.5 text-xs text-white/60">Sistema interno</p>
+    </a>
+  </div>
+
+  <!-- NavegaciÃ³n -->
+  <nav
+    class="flex-1 overflow-y-auto p-4
+           [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.2)_transparent]"
+  >
+    @for (seccion of secciones; track seccion.titulo) {
+      <ul class="mb-3 flex flex-col gap-1">
+        <li class="mx-3.5 mb-2 mt-4 first:mt-0">
+          <p class="text-sm font-black uppercase text-white opacity-75">{{ seccion.titulo }}</p>
+        </li>
+
+        @for (item of seccion.items; track item.ruta) {
+          <li>
+            <a
+              [routerLink]="item.ruta"
+              routerLinkActive="bg-gradient-to-tr from-orange-600 to-orange-400 shadow-md shadow-orange-500/20"
+              (click)="cerrarMenu()"
+              class="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-white
+                     transition-all hover:bg-white/10 active:bg-white/30"
+            >
+              <span class="w-5 shrink-0 text-center text-lg leading-none">{{ item.icono }}</span>
+              <span class="truncate text-base font-medium">{{ item.etiqueta }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  </nav>
+</aside>
+
+
+=== src\app\shared\components\sidebar\sidebar.ts ===
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+
+interface ItemMenu {
+  ruta: string;
+  etiqueta: string;
+  icono: string;
+}
+
+interface SeccionMenu {
+  titulo: string;
+  items: ItemMenu[];
+}
+
+@Component({
+  selector: 'app-sidebar',
+  imports: [RouterLink, RouterLinkActive],
+  templateUrl: './sidebar.html',
+})
+export class Sidebar {
+  @Input() open = false;
+  @Output() closeMenu = new EventEmitter<void>();
+
+  secciones: SeccionMenu[] = [
+    {
+      titulo: 'Principal',
+      items: [
+        { ruta: '/dashboard', etiqueta: 'Dashboard', icono: 'âŒ‚' },
+        { ruta: '/profile', etiqueta: 'Mi perfil', icono: 'â™™' },
+      ],
+    },
+    {
+      titulo: 'GestiÃ³n',
+      items: [
+        { ruta: '/declarantes', etiqueta: 'Declarantes', icono: 'â™™' },
+        { ruta: '/dependencias', etiqueta: 'Dependencias', icono: 'â–¦' },
+        { ruta: '/usuarios', etiqueta: 'Usuarios', icono: 'â™§' },
+      ],
+    },
+    {
+      titulo: 'Operaciones',
+      items: [
+        { ruta: '/transacciones', etiqueta: 'Transacciones en efectivo', icono: '$' },
+        { ruta: '/ausencias', etiqueta: 'Ausencias', icono: 'â–£' },
+        { ruta: '/reportes-ros', etiqueta: 'Reportes ROS', icono: 'â–¤' },
+      ],
+    },
+    {
+      titulo: 'Sistema',
+      items: [
+        { ruta: '/historial', etiqueta: 'Historial de auditorÃ­a', icono: 'â—·' },
+      ],
+    },
+  ];
+
+  cerrarMenu() {
+    this.closeMenu.emit();
+  }
+}
+
+
+=== src\app\shared\components\stat-card\stat-card.css ===
+
+=== src\app\shared\components\stat-card\stat-card.html ===
+<div class="relative flex flex-col rounded-xl border border-blue-gray-50 bg-white text-gray-700 shadow-sm">
+  <div class="flex items-start justify-between p-4">
+    <div
+      class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl text-white
+             bg-gradient-to-br from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+    >
+      {{ icono }}
+    </div>
+
+    <div class="text-right">
+      <p class="text-sm text-blue-gray-600">{{ titulo }}</p>
+      <h4 class="text-2xl font-semibold text-blue-gray-900">{{ valor }}</h4>
+    </div>
+  </div>
+
+  <div class="border-t border-blue-gray-50 p-4">
+    <p class="text-sm text-blue-gray-600">{{ descripcion }}</p>
+  </div>
+</div>
+
+
+=== src\app\shared\components\stat-card\stat-card.ts ===
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-stat-card',
+  standalone: true,
+  templateUrl: './stat-card.html'
+})
+export class StatCard {
+  @Input() titulo = '';
+  @Input() valor: string | number = 0;
+  @Input() descripcion = '';
+  @Input() icono = '';
+  @Input() color: 'blue' | 'pink' | 'green' | 'orange' = 'blue';
+}
+
+
+=== src\app\shared\services\declarantes.ts ===
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+export interface Declarante {
+  [x: string]: any;
+  id_declarante: number;
+  nombre: string;
+  tipo_documento: string;
+  numero_documento: string;
+  cargo: string;
+  id_dependencia: number;
+  dependencia?: string;
+  direccion?: string;
+  telefono?: string;
+  correo?: string;
+  fecha_registro?: string;
+}
+
+export interface RespuestaApi<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DeclarantesService {
+
+  private apiUrl = 'http://localhost/sarlaft-api';
+
+  constructor(
+    private http: HttpClient
+  ) {}
+
+  listar(): Observable<RespuestaApi<Declarante[]>> {
+
+    return this.http.get<RespuestaApi<Declarante[]>>(
+      `${this.apiUrl}/declarantes`
+    );
+
+  }
+
+  obtener(id: number): Observable<RespuestaApi<Declarante>> {
+
+    return this.http.get<RespuestaApi<Declarante>>(
+      `${this.apiUrl}/declarantes/${id}`
+    );
+
+  }
+
+  crear(
+    declarante: Partial<Declarante>
+  ): Observable<RespuestaApi<Declarante>> {
+
+    return this.http.post<RespuestaApi<Declarante>>(
+      `${this.apiUrl}/declarantes`,
+      declarante
+    );
+
+  }
+
+  actualizar(
+    id: number,
+    declarante: Partial<Declarante>
+  ): Observable<RespuestaApi<Declarante>> {
+
+    return this.http.put<RespuestaApi<Declarante>>(
+      `${this.apiUrl}/declarantes/${id}`,
+      declarante
+    );
+
+  }
+
+  eliminar(
+    id: number
+  ): Observable<RespuestaApi<null>> {
+
+    return this.http.delete<RespuestaApi<null>>(
+      `${this.apiUrl}/declarantes/${id}`
+    );
+
+  }
+}
+
+
+=== src\app\app.config.server.ts ===
+import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
+import { provideServerRendering, withRoutes } from '@angular/ssr';
+import { appConfig } from './app.config';
+import { serverRoutes } from './app.routes.server';
+
+const serverConfig: ApplicationConfig = {
+  providers: [
+    provideServerRendering(withRoutes(serverRoutes))
+  ]
+};
+
+export const config = mergeApplicationConfig(appConfig, serverConfig);
+
+
+=== src\app\app.config.ts ===
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
+import { provideClientHydration } from '@angular/platform-browser';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(routes), provideClientHydration()
+  ]
+};
+
+
+=== src\app\app.css ===
+
+=== src\app\app.html ===
+<router-outlet />
+
+
+=== src\app\app.routes.server.ts ===
+import { RenderMode, ServerRoute } from '@angular/ssr';
+
+export const serverRoutes: ServerRoute[] = [
+  {
+    path: '**',
+    renderMode: RenderMode.Prerender
+  }
+];
+
+
+=== src\app\app.routes.ts ===
+import { Routes } from '@angular/router';
+import { Layout } from './shared/components/layout/layout';
+
+export const routes: Routes = [
+  {
+    path: '',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./bussiness/dashboard/dashboard')
+            .then(m => m.Dashboard)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./bussiness/profile/profile')
+            .then(m => m.Profile)
+      },
+    {
+      path: 'declarantes',
+      loadComponent: ()=>
+        import('./bussiness/tables/declarantes/declarantes')
+      .then (m => m.DeclarantesComponent)
+    }
+    ]
+  },
+  {
+    path: '**',
+    redirectTo: 'dashboard'
+  }
+];
+
+
+=== src\app\app.ts ===
+import { Component, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+  imports: [RouterOutlet],
+  selector: 'app-root',
+  styleUrl: './app.css',
+  templateUrl: './app.html',
+})
+export class App {
+  protected readonly title = signal('sarlatf');
+}
+

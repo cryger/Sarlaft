@@ -1,0 +1,55 @@
+<div class="flex min-h-screen items-center justify-center bg-gray-50/50 p-4">
+  <div class="relative flex w-full max-w-sm flex-col rounded-xl bg-white text-gray-700 shadow-md">
+    <div
+      class="relative -mt-6 mx-4 mb-2 grid place-items-center overflow-hidden rounded-xl p-6 text-center text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+    >
+      <h1 class="text-xl font-semibold">SARLAFT</h1>
+      <p class="mt-1 text-sm text-white/70">Sistema interno · Inicia sesión</p>
+    </div>
+
+    <form class="flex flex-col gap-4 p-6 pt-4" (ngSubmit)="entrar()">
+      @if (error()) {
+        <div class="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3" role="alert">
+          <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-sm font-bold text-red-600">!</span>
+          <p class="text-sm text-red-700">{{ error() }}</p>
+        </div>
+      }
+
+      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+        Usuario o correo
+        <input
+          type="text"
+          name="usuario"
+          autocomplete="username"
+          [ngModel]="usuario()"
+          (ngModelChange)="usuario.set($event)"
+          class="h-11 rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm font-normal normal-case
+                 text-gray-700 outline-none transition focus:border-blue-gray-500"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+        Contraseña
+        <input
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          class="h-11 rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm font-normal normal-case
+                 text-gray-700 outline-none transition focus:border-blue-gray-500"
+        />
+      </label>
+
+      <button
+        type="submit"
+        [disabled]="cargando()"
+        class="mt-2 h-11 rounded-lg text-xs font-bold uppercase text-white shadow-md transition
+               bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {{ cargando() ? 'Ingresando...' : 'Iniciar sesión' }}
+      </button>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,137 @@
+<div class="mt-12">
+  @if (error()) {
+    <div class="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+      <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+
+      <div class="flex-1">
+        <p class="font-semibold text-red-800">No se pudo cargar el dashboard</p>
+        <p class="mt-1 text-sm text-red-600">{{ error() }}</p>
+      </div>
+
+      <button type="button" (click)="cargar()" class="text-sm font-semibold text-red-700 transition hover:text-red-900">
+        Reintentar
+      </button>
+    </div>
+  }
+
+  @if (cargando()) {
+    <!-- Cargando -->
+    <div class="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4" aria-busy="true">
+      @for (n of [1, 2, 3, 4]; track n) {
+        <div class="h-[132px] animate-pulse rounded-xl border border-blue-gray-50 bg-white shadow-sm"></div>
+      }
+    </div>
+  } @else if (datos()) {
+    <p class="mb-6 text-right text-sm text-blue-gray-600">
+      Corte: <span class="font-semibold text-blue-gray-900">{{ corte() }}</span>
+    </p>
+
+    <!-- Indicadores -->
+    <div class="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      @for (i of indicadores(); track i.titulo) {
+        <app-stat-card
+          [titulo]="i.titulo"
+          [valor]="i.valor"
+          [icono]="i.icono"
+          [descripcion]="i.descripcion"
+        />
+      }
+    </div>
+
+    <div class="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <!-- Actividad reciente -->
+      <div class="overflow-hidden rounded-xl border border-blue-gray-50 bg-white shadow-sm xl:col-span-2">
+        <div class="flex items-center justify-between p-6">
+          <div>
+            <h6 class="mb-1 text-base font-semibold text-blue-gray-900">Actividad reciente</h6>
+            <p class="text-sm text-blue-gray-600">Últimos registros del sistema</p>
+          </div>
+
+          @if (auth.esAdmin()) {
+            <a
+              routerLink="/historial"
+              class="text-sm font-semibold text-blue-gray-600 transition-colors hover:text-blue-500"
+            >
+              Ver historial →
+            </a>
+          }
+        </div>
+
+        <div class="overflow-x-auto pb-2">
+          <table class="w-full min-w-[600px] table-auto">
+            <thead>
+              <tr>
+                <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Tipo</th>
+                <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Consecutivo</th>
+                <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Fecha</th>
+                <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Estado</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (a of actividad(); track a.consecutivo) {
+                <tr class="[&:last-child>td]:border-b-0">
+                  <td class="border-b border-blue-gray-50 px-6 py-3 text-xs font-medium text-blue-gray-600">{{ a.tipo }}</td>
+                  <td class="border-b border-blue-gray-50 px-6 py-3 text-sm font-bold text-blue-gray-900">{{ a.consecutivo }}</td>
+                  <td class="border-b border-blue-gray-50 px-6 py-3 text-xs font-medium text-blue-gray-600">{{ fecha(a.fecha) }}</td>
+                  <td class="border-b border-blue-gray-50 px-6 py-3">
+                    <span
+                      class="inline-block w-fit rounded-md bg-gradient-to-tr px-2 py-0.5 text-[11px] font-medium uppercase text-white"
+                      [class]="estilosEstado[a.estado]"
+                    >
+                      {{ a.estado }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="px-6 py-12 text-center text-sm text-blue-gray-600">
+                    Aún no hay actividad registrada.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Resumen operativo -->
+      <div class="rounded-xl border border-blue-gray-50 bg-white p-6 shadow-sm">
+        <h6 class="mb-1 text-base font-semibold text-blue-gray-900">Resumen operativo</h6>
+        <p class="text-sm text-blue-gray-600">Distribución de los formularios registrados</p>
+
+        <div class="mt-6 space-y-5">
+          @for (r of resumen(); track r.etiqueta) {
+            <div>
+              <div class="mb-1 flex justify-between text-xs font-medium text-blue-gray-600">
+                <span>{{ r.etiqueta }}</span>
+                <span class="font-bold text-blue-gray-900">{{ r.valor }}</span>
+              </div>
+
+              <div class="flex h-1 w-full overflow-hidden rounded-sm bg-blue-gray-50">
+                <div
+                  class="h-full bg-gradient-to-tr from-blue-600 to-blue-400"
+                  [style.width.%]="r.porcentaje"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (pendientes() > 0) {
+          <div class="mt-6 rounded-xl border border-amber-100 bg-amber-50 p-4">
+            <p class="font-semibold text-amber-800">
+              {{ pendientes() === 1 ? '1 formulario pendiente' : pendientes() + ' formularios pendientes' }}
+            </p>
+            <p class="mt-1 text-xs text-amber-600">Esperan revisión de un administrador</p>
+          </div>
+        } @else {
+          <div class="mt-6 rounded-xl border border-green-100 bg-green-50 p-4">
+            <p class="font-semibold text-green-800">Todo al día</p>
+            <p class="mt-1 text-xs text-green-600">No hay formularios pendientes de revisión</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

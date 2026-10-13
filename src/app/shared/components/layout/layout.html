@@ -1,0 +1,23 @@
+<div class="min-h-screen bg-gray-50/50">
+  <!-- Fondo oscuro para móvil -->
+  @if (menuAbierto) {
+    <button
+      type="button"
+      aria-label="Cerrar menú"
+      class="fixed inset-0 z-40 bg-gray-950/60 xl:hidden"
+      (click)="cerrarMenu()"
+    ></button>
+  }
+
+  <app-sidebar [open]="menuAbierto" (closeMenu)="cerrarMenu()" />
+
+  <div class="flex min-h-screen min-w-0 flex-col p-4 xl:ml-80">
+    <app-header (menuToggle)="alternarMenu()" />
+
+    <main class="flex-1">
+      <router-outlet />
+    </main>
+
+    <app-footer />
+  </div>
+</div>

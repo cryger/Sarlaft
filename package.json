@@ -20,8 +20,11 @@
     "@angular/platform-server": "^22.2.0",
     "@angular/router": "^22.2.0",
     "@angular/ssr": "^22.2.1",
+    "@tailwindcss/postcss": "^4.3.3",
     "express": "^5.1.0",
+    "postcss": "^8.5.29",
     "rxjs": "~7.8.0",
+    "tailwindcss": "^4.3.3",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
