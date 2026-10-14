@@ -1,55 +1,101 @@
-<div class="flex min-h-screen items-center justify-center bg-gray-50/50 p-4">
-  <div class="relative flex w-full max-w-sm flex-col rounded-xl bg-white text-gray-700 shadow-md">
-    <div
-      class="relative -mt-6 mx-4 mb-2 grid place-items-center overflow-hidden rounded-xl p-6 text-center text-white
-             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
-    >
-      <h1 class="text-xl font-semibold">SARLAFT</h1>
-      <p class="mt-1 text-sm text-white/70">Sistema interno · Inicia sesión</p>
+<div class="grid min-h-screen bg-gray-50/50 lg:grid-cols-2">
+
+  <!-- Panel de marca (solo en pantallas grandes) -->
+  <aside
+    class="relative hidden flex-col items-center justify-center overflow-hidden p-12 lg:flex
+           bg-gradient-to-br from-sky-50 via-white to-blue-100"
+  >
+    <div class="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-sky-200/40 blur-3xl"></div>
+    <div class="pointer-events-none absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-blue-300/30 blur-3xl"></div>
+
+    <img
+      src="logo-hsjg.png"
+      width="446"
+      height="462"
+      alt="Hospital San José del Guaviare, Empresa Social del Estado"
+      class="relative w-64 drop-shadow-sm xl:w-72"
+    />
+
+    <div class="relative mt-8 max-w-md text-center">
+      <h2 class="text-lg font-semibold text-blue-gray-900">Sistema SARLAFT</h2>
+      <p class="mt-2 text-sm leading-relaxed text-blue-gray-600">
+        Administración del riesgo de lavado de activos y de la financiación del terrorismo.
+      </p>
     </div>
+  </aside>
 
-    <form class="flex flex-col gap-4 p-6 pt-4" (ngSubmit)="entrar()">
-      @if (error()) {
-        <div class="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3" role="alert">
-          <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-sm font-bold text-red-600">!</span>
-          <p class="text-sm text-red-700">{{ error() }}</p>
+  <!-- Formulario -->
+  <main class="flex items-center justify-center p-4 sm:p-8">
+    <div class="w-full max-w-sm">
+
+      <!-- Logo en pantallas pequeñas -->
+      <div class="mb-10 flex justify-center lg:hidden">
+        <img
+          src="logo-hsjg.png"
+          width="446"
+          height="462"
+          alt="Hospital San José del Guaviare, Empresa Social del Estado"
+          class="w-32"
+        />
+      </div>
+
+      <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+        <div
+          class="relative -mt-6 mx-4 mb-2 grid place-items-center overflow-hidden rounded-xl p-6 text-center text-white
+                 bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+        >
+          <h1 class="text-xl font-semibold">SARLAFT</h1>
+          <p class="mt-1 text-sm text-white/70">Sistema interno · Inicia sesión</p>
         </div>
-      }
 
-      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
-        Usuario o correo
-        <input
-          type="text"
-          name="usuario"
-          autocomplete="username"
-          [ngModel]="usuario()"
-          (ngModelChange)="usuario.set($event)"
-          class="h-11 rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm font-normal normal-case
-                 text-gray-700 outline-none transition focus:border-blue-gray-500"
-        />
-      </label>
+        <form class="flex flex-col gap-4 p-6 pt-4" (ngSubmit)="entrar()">
+          @if (error()) {
+            <div class="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3" role="alert">
+              <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-red-100 text-sm font-bold text-red-600">!</span>
+              <p class="text-sm text-red-700">{{ error() }}</p>
+            </div>
+          }
 
-      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
-        Contraseña
-        <input
-          type="password"
-          name="password"
-          autocomplete="current-password"
-          [ngModel]="password()"
-          (ngModelChange)="password.set($event)"
-          class="h-11 rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm font-normal normal-case
-                 text-gray-700 outline-none transition focus:border-blue-gray-500"
-        />
-      </label>
+          <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+            Usuario o correo
+            <input
+              type="text"
+              name="usuario"
+              autocomplete="username"
+              [ngModel]="usuario()"
+              (ngModelChange)="usuario.set($event)"
+              class="h-11 rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm font-normal normal-case
+                     text-gray-700 outline-none transition focus:border-blue-gray-500"
+            />
+          </label>
 
-      <button
-        type="submit"
-        [disabled]="cargando()"
-        class="mt-2 h-11 rounded-lg text-xs font-bold uppercase text-white shadow-md transition
-               bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {{ cargando() ? 'Ingresando...' : 'Iniciar sesión' }}
-      </button>
-    </form>
-  </div>
+          <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+            Contraseña
+            <input
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
+              class="h-11 rounded-[7px] border border-blue-gray-200 bg-transparent px-3 text-sm font-normal normal-case
+                     text-gray-700 outline-none transition focus:border-blue-gray-500"
+            />
+          </label>
+
+          <button
+            type="submit"
+            [disabled]="cargando()"
+            class="mt-2 h-11 rounded-lg text-xs font-bold uppercase text-white shadow-md transition
+                   bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {{ cargando() ? 'Ingresando...' : 'Iniciar sesión' }}
+          </button>
+        </form>
+      </div>
+
+      <p class="mt-6 text-center text-xs text-blue-gray-400">
+        E.S.E. Hospital San José del Guaviare · Uso interno
+      </p>
+    </div>
+  </main>
 </div>
