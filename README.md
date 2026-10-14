@@ -133,7 +133,7 @@ VALUES ('Administrador', 'admin', 'PEGA_AQUI_EL_HASH', 'Administrador', 1);
 2. Edita `config.php`:
 
 ```php
-'db' => ['host' => 'localhost', 'name' => 'esehsjg18_sistemasarlaft', 'user' => 'root', 'pass' => ''],
+'db' => ['host' => 'localhost', 'name' => 'sistemasarlaft', 'user' => 'root', 'pass' => ''],
 'jwt' => ['secret' => 'una-clave-larga-de-minimo-40-caracteres', 'ttl_horas' => 8],
 'cors' => ['origenes' => ['http://localhost:4200']],
 'debug' => false,
