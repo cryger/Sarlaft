@@ -27,7 +27,7 @@
         @for (item of seccion.items; track item.ruta) {
           <li>
             <a
-              [routerLink]="item.ruta"
+              [routerLink]="destino(item)"
               routerLinkActive="bg-gradient-to-tr from-orange-600 to-orange-400 shadow-md shadow-orange-500/20"
               (click)="cerrarMenu()"
               class="flex w-full items-center gap-4 rounded-lg px-4 py-3 text-white

@@ -1,0 +1,316 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+
+    <!-- Encabezado flotante -->
+    <div
+      class="relative -mt-6 mx-4 mb-6 flex items-center justify-between gap-4 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+    >
+      <div>
+        <h6 class="text-base font-semibold">
+          {{ editando ? 'Editar reporte' + (actual() ? ' ' + actual()!.consecutivo : '') : 'Operación intentada, inusual o sospechosa' }}
+        </h6>
+        <p class="mt-1 text-sm text-white/70">Formato E-PL-FO-14 (ROS) · Confidencial</p>
+      </div>
+
+      @if (auth.esAdmin()) {
+        <a
+          [routerLink]="editando ? ['/reportes-ros', id] : ['/reportes-ros']"
+          class="shrink-0 text-xs font-bold uppercase text-white/80 transition hover:text-white"
+        >
+          ← Volver
+        </a>
+      }
+    </div>
+
+    @if (enviado(); as env) {
+      <!-- Confirmación para quien no es administrador -->
+      <div class="flex flex-col items-center px-6 pb-12 pt-4 text-center" role="status" id="reporte-enviado">
+        <div class="grid h-14 w-14 place-items-center rounded-full bg-green-100 text-2xl font-bold text-green-600">✓</div>
+        <h3 class="mt-4 text-lg font-semibold text-blue-gray-900">Reporte enviado de forma reservada</h3>
+        <p class="mt-1 max-w-md text-sm text-blue-gray-600">
+          Quedó registrado con el consecutivo <strong class="text-blue-gray-900">{{ env.consecutivo }}</strong> y será
+          revisado de forma reservada por el Oficial de Cumplimiento. Conserva este número como referencia.
+        </p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            (click)="otroReporte()"
+            class="h-11 rounded-lg border border-blue-gray-200 px-5 text-xs font-bold uppercase text-blue-gray-700
+                   transition hover:bg-blue-gray-50"
+          >
+            Registrar otro reporte
+          </button>
+          <a
+            routerLink="/dashboard"
+            class="inline-flex h-11 items-center rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+                   bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg"
+          >
+            Ir al inicio
+          </a>
+        </div>
+      </div>
+    } @else if (cargando()) {
+      <div class="flex flex-col items-center justify-center px-6 py-16" aria-busy="true">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+        <p class="mt-4 text-sm text-blue-gray-600">Cargando formulario...</p>
+      </div>
+    } @else if (errorCarga()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">No se pudo cargar el formulario</p>
+          <p class="mt-1 text-sm text-red-600">{{ errorCarga() }}</p>
+        </div>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="px-6 pb-6">
+
+        <p class="mb-6 rounded-lg border border-blue-gray-100 bg-gray-50 p-4 text-sm leading-relaxed text-blue-gray-700">
+          Este reporte (ROS) es <strong>confidencial</strong> y debe diligenciarse con la mayor precisión posible.
+          Una vez enviado, será remitido de forma reservada al Oficial de Cumplimiento.
+        </p>
+
+        @if (error()) {
+          <div class="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+            <p class="flex-1 pt-1 text-sm font-medium text-red-700">{{ error() }}</p>
+          </div>
+        }
+
+        <!-- ============ Información del reportante ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Información del reportante</legend>
+
+          <label class="mb-5 flex w-fit cursor-pointer items-center gap-2 text-sm text-blue-gray-800">
+            <input id="anonimo" type="checkbox" formControlName="anonimo" class="h-4 w-4 accent-blue-600" />
+            Reporte anónimo (no se registra quién reporta)
+          </label>
+
+          @if (!form.controls.anonimo.value) {
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label for="buscar-declarante" class="etiqueta">Buscar por nombre o documento</label>
+                <input
+                  id="buscar-declarante"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="Nombre o documento"
+                  class="campo"
+                  [value]="buscador.busqueda()"
+                  (input)="buscador.busqueda.set($any($event.target).value)"
+                />
+                <p class="mt-1 min-h-4 text-xs text-blue-gray-500">
+                  {{ buscador.opciones().length }} de {{ buscador.declarantes().length }} declarantes ·
+                  <a routerLink="/declarantes/nuevo" target="_blank" class="font-semibold text-blue-500 hover:text-blue-700">Registrar nuevo</a>
+                  ·
+                  <button type="button" (click)="actualizarDeclarantes()" [disabled]="buscador.actualizando()"
+                          class="font-semibold text-blue-500 hover:text-blue-700 disabled:opacity-50">
+                    {{ buscador.actualizando() ? 'Actualizando...' : 'Actualizar lista' }}
+                  </button>
+                </p>
+              </div>
+
+              <app-campo etiqueta="Nombre del reportante" para="id_declarante" [requerido]="true" [error]="mensaje('id_declarante')">
+                <select id="id_declarante" class="campo" formControlName="id_declarante"
+                        [attr.aria-invalid]="mensaje('id_declarante') ? 'true' : null" aria-describedby="err-id_declarante">
+                  <option [ngValue]="null" disabled>Selecciona quién reporta</option>
+                  @for (d of buscador.opciones(); track d.id_declarante) {
+                    <option [ngValue]="d.id_declarante">{{ d.nombre }} · {{ d.tipo_documento }} {{ d.numero_documento }}</option>
+                  }
+                </select>
+              </app-campo>
+            </div>
+
+            @if (buscador.elegido(); as d) {
+              <div class="mt-5 rounded-lg border border-blue-gray-100 bg-gray-50 p-4" id="datos-reportante">
+                <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <dt class="text-xs font-semibold text-blue-gray-500">Área</dt>
+                    <dd class="font-medium text-blue-gray-900">{{ d.dependencia || '—' }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs font-semibold text-blue-gray-500">Cargo</dt>
+                    <dd class="font-medium text-blue-gray-900">{{ d.cargo || '—' }}</dd>
+                  </div>
+                </dl>
+              </div>
+            }
+          } @else {
+            <p class="rounded-lg border border-blue-gray-100 bg-gray-50 p-4 text-sm text-blue-gray-700" id="aviso-anonimo">
+              El reporte se enviará sin nombre, área ni cargo del reportante.
+            </p>
+          }
+        </fieldset>
+
+        <!-- ============ Información del reporte ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Información del reporte</legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <app-campo etiqueta="Fecha de reporte" para="fecha_reporte" [requerido]="true" [error]="mensaje('fecha_reporte')">
+              <input id="fecha_reporte" type="date" class="campo" formControlName="fecha_reporte" [max]="hoy"
+                     [attr.aria-invalid]="mensaje('fecha_reporte') ? 'true' : null" aria-describedby="err-fecha_reporte" />
+            </app-campo>
+
+            <app-campo etiqueta="Área / proceso involucrado" para="area_involucrada" [requerido]="true" [error]="mensaje('area_involucrada')">
+              <select id="area_involucrada" class="campo" formControlName="area_involucrada"
+                      [attr.aria-invalid]="mensaje('area_involucrada') ? 'true' : null" aria-describedby="err-area_involucrada">
+                <option value="" disabled>Seleccione un área</option>
+                @for (a of areas(); track a) {
+                  <option [value]="a">{{ a }}</option>
+                }
+              </select>
+            </app-campo>
+
+            <div class="sm:col-span-2">
+              <p id="lbl-tipo" class="etiqueta">Operación reportada <span class="text-red-500">*</span></p>
+              <div role="radiogroup" aria-labelledby="lbl-tipo" aria-describedby="err-tipo_operacion" class="flex flex-wrap gap-x-6 gap-y-2">
+                @for (t of tiposOperacion; track t) {
+                  <label class="flex cursor-pointer items-center gap-2 text-sm text-blue-gray-700">
+                    <input type="radio" formControlName="tipo_operacion" [value]="t" [attr.value]="t" class="h-4 w-4 accent-blue-600" />
+                    {{ t }}
+                  </label>
+                }
+              </div>
+              <p id="err-tipo_operacion" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('tipo_operacion') }}</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ============ Tercero involucrado ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Información del tercero involucrado</legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <app-campo etiqueta="Nombre del tercero" para="nombre_tercero" [requerido]="true" [error]="mensaje('nombre_tercero')">
+              <input id="nombre_tercero" class="campo" formControlName="nombre_tercero" autocomplete="off"
+                     [attr.aria-invalid]="mensaje('nombre_tercero') ? 'true' : null" aria-describedby="err-nombre_tercero" />
+            </app-campo>
+
+            <app-campo etiqueta="Tipo de tercero" para="tipo_tercero" [requerido]="true" [error]="mensaje('tipo_tercero')">
+              <select id="tipo_tercero" class="campo" formControlName="tipo_tercero"
+                      [attr.aria-invalid]="mensaje('tipo_tercero') ? 'true' : null" aria-describedby="err-tipo_tercero">
+                <option [ngValue]="null" disabled>Seleccione un tipo</option>
+                @for (t of tiposTercero; track t) {
+                  <option [ngValue]="t">{{ t }}</option>
+                }
+              </select>
+            </app-campo>
+
+            <app-campo etiqueta="Tipo de documento" para="tipo_identificacion" [requerido]="true" [error]="mensaje('tipo_identificacion')">
+              <select id="tipo_identificacion" class="campo" formControlName="tipo_identificacion"
+                      [attr.aria-invalid]="mensaje('tipo_identificacion') ? 'true' : null" aria-describedby="err-tipo_identificacion">
+                <option value="" disabled>Seleccione un tipo de documento</option>
+                @for (t of tiposIdentificacion; track t.valor) {
+                  <option [value]="t.valor">{{ t.etiqueta }}</option>
+                }
+              </select>
+            </app-campo>
+
+            <app-campo etiqueta="Número de identificación" para="numero_identificacion" [requerido]="true"
+                       ayuda="Sin puntos ni espacios" [error]="mensaje('numero_identificacion')">
+              <input id="numero_identificacion" class="campo" formControlName="numero_identificacion" autocomplete="off"
+                     [attr.aria-invalid]="mensaje('numero_identificacion') ? 'true' : null" aria-describedby="err-numero_identificacion" />
+            </app-campo>
+          </div>
+        </fieldset>
+
+        <!-- ============ Descripción, información financiera y análisis ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Descripción de la operación</legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <app-campo class="sm:col-span-2" etiqueta="Descripción detallada" para="descripcion" [requerido]="true" [error]="mensaje('descripcion')">
+              <textarea id="descripcion" rows="5" class="campo-area" formControlName="descripcion"
+                        [attr.aria-invalid]="mensaje('descripcion') ? 'true' : null" aria-describedby="err-descripcion"></textarea>
+            </app-campo>
+
+            <app-campo etiqueta="Valor económico involucrado (COP)" para="valor_economico" [requerido]="true" [error]="mensaje('valor_economico')">
+              <input id="valor_economico" type="number" inputmode="decimal" step="0.01" placeholder="0" class="campo tabular-nums"
+                     formControlName="valor_economico"
+                     [attr.aria-invalid]="mensaje('valor_economico') ? 'true' : null" aria-describedby="err-valor_economico" />
+            </app-campo>
+          </div>
+        </fieldset>
+
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Análisis del reporte</legend>
+
+          <div class="grid grid-cols-1 gap-5">
+            <app-campo etiqueta="Indicios que la hacen sospechosa, intentada o inusual" para="indicios" [requerido]="true" [error]="mensaje('indicios')">
+              <textarea id="indicios" rows="4" class="campo-area" formControlName="indicios"
+                        [attr.aria-invalid]="mensaje('indicios') ? 'true' : null" aria-describedby="err-indicios"></textarea>
+            </app-campo>
+
+            <app-campo etiqueta="Relación con otras operaciones previas" para="relacion_operaciones" nota="si aplica">
+              <textarea id="relacion_operaciones" rows="3" class="campo-area" formControlName="relacion_operaciones"></textarea>
+            </app-campo>
+
+            <app-campo etiqueta="Observaciones adicionales" para="observaciones_adicionales" nota="opcional">
+              <textarea id="observaciones_adicionales" rows="3" class="campo-area" formControlName="observaciones_adicionales"></textarea>
+            </app-campo>
+          </div>
+        </fieldset>
+
+        <!-- ============ Autorización de datos personales ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Autorización de datos personales</legend>
+
+          <div class="mb-4 max-h-44 space-y-3 overflow-y-auto rounded-lg border border-blue-gray-100 bg-gray-50 p-4 text-xs leading-relaxed text-blue-gray-700"
+               tabindex="0" aria-label="Texto de la autorización de datos personales">
+            @for (p of textoAutorizacion; track $index) {
+              <p>{{ p }}</p>
+            }
+          </div>
+
+          <label class="mb-1 flex cursor-pointer items-start gap-2 text-sm text-blue-gray-800">
+            <input id="autoriza" type="checkbox" formControlName="autoriza" class="mt-0.5 h-4 w-4 accent-blue-600"
+                   [attr.aria-invalid]="mensaje('autoriza') ? 'true' : null" aria-describedby="err-autoriza" />
+            <span>El titular de los datos declara y autoriza lo anterior. <span class="text-red-500">*</span></span>
+          </label>
+          <p id="err-autoriza" class="mb-4 min-h-4 text-xs text-red-600">{{ mensaje('autoriza') }}</p>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <app-campo etiqueta="Nombre del titular" para="titular_nombre" [requerido]="true" [error]="mensaje('titular_nombre')">
+              <input id="titular_nombre" class="campo" formControlName="titular_nombre" autocomplete="off"
+                     [attr.aria-invalid]="mensaje('titular_nombre') ? 'true' : null" aria-describedby="err-titular_nombre" />
+            </app-campo>
+
+            <app-campo etiqueta="Tipo y número de documento" para="titular_documento" [requerido]="true" [error]="mensaje('titular_documento')">
+              <input id="titular_documento" class="campo" formControlName="titular_documento" autocomplete="off"
+                     [attr.aria-invalid]="mensaje('titular_documento') ? 'true' : null" aria-describedby="err-titular_documento" />
+            </app-campo>
+          </div>
+        </fieldset>
+
+        <!-- ============ Acciones ============ -->
+        <div class="flex flex-col-reverse items-stretch gap-3 border-t border-blue-gray-50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-xs text-blue-gray-500"><span class="text-red-500">*</span> Campo obligatorio</p>
+
+          <div class="flex flex-col-reverse gap-3 sm:flex-row">
+            @if (auth.esAdmin()) {
+              <a
+                [routerLink]="editando ? ['/reportes-ros', id] : ['/reportes-ros']"
+                class="inline-flex h-11 items-center justify-center rounded-lg px-5 text-xs font-bold uppercase
+                       text-gray-600 transition hover:bg-blue-gray-500/10"
+              >
+                Cancelar
+              </a>
+            }
+
+            <button
+              type="submit"
+              [disabled]="guardando()"
+              class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+                     bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg
+                     disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ guardando() ? 'Enviando...' : editando ? 'Guardar cambios' : 'Enviar reporte confidencial' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    }
+  </div>
+</div>

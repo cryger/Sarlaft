@@ -20,3 +20,14 @@ export const adminGuard: CanActivateFn = () => {
 
   return auth.esAdmin() ? true : router.createUrlTree(['/dashboard']);
 };
+
+/**
+ * Lista de ROS: solo para administradores (es confidencial).
+ * Los demás usuarios van al formulario de envío en lugar de al dashboard.
+ */
+export const rosListaGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  return auth.esAdmin() ? true : router.createUrlTree(['/reportes-ros/nuevo']);
+};

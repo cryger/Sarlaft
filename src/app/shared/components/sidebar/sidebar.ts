@@ -9,6 +9,8 @@ interface ItemMenu {
   icono: string;
   /** Solo lo ven los administradores */
   soloAdmin?: boolean;
+    /** Ruta alternativa para quien no es administrador */
+  rutaGestor?: string;
 }
 
 interface SeccionMenu {
@@ -37,7 +39,7 @@ const MENU: SeccionMenu[] = [
     items: [
       { ruta: '/transacciones', etiqueta: 'Transacciones en efectivo', icono: '$' },
       { ruta: '/ausencias', etiqueta: 'Ausencias', icono: '▣' },
-      { ruta: '/reportes-ros', etiqueta: 'Reportes ROS', icono: '▤' },
+      { ruta: '/reportes-ros', rutaGestor: '/reportes-ros/nuevo', etiqueta: 'Reportes ROS', icono: '▤' },
     ],
   },
   {
@@ -66,6 +68,11 @@ export class Sidebar {
       ...s,
       items: s.items.filter((i) => admin || !i.soloAdmin),
     })).filter((s) => s.items.length > 0);
+  }
+
+    /** Los gestores no pueden ver la lista de ROS (es confidencial): su enlace va al formulario de envío. */
+  destino(item: ItemMenu): string {
+    return !this.auth.esAdmin() && item.rutaGestor ? item.rutaGestor : item.ruta;
   }
 
   cerrarMenu(): void {

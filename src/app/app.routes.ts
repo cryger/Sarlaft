@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { adminGuard, authGuard } from './core/auth.guard';
+import { adminGuard, authGuard,rosListaGuard } from './core/auth.guard';
 import { Layout } from './shared/components/layout/layout';
 import { DeclaranteForm } from './bussiness/tables/declarantes/declarante-form/declarante-form';
 import { Dependencias} from './bussiness/dependencias/dependencias';
@@ -111,7 +111,30 @@ export const routes: Routes = [
         data: { titulo: 'Editar ausencia' },
         loadComponent: () => import('./bussiness/ausencias/ausencias-form').then((m) => m.AusenciaForm),
       },
-      { path: 'reportes-ros', data: { titulo: 'Reportes ROS' }, loadComponent: proximamente },
+            // ROS: cualquier usuario puede enviarlo, pero solo el administrador lo consulta
+      {
+        path: 'reportes-ros',
+        data: { titulo: 'Reportes ROS' },
+        canActivate: [rosListaGuard],
+        loadComponent: () => import('./bussiness/reportes-ros/reportes-ros').then((m) => m.ReportesRos),
+      },
+      {
+        path: 'reportes-ros/nuevo',
+        data: { titulo: 'Nuevo reporte ROS' },
+        loadComponent: () => import('./bussiness/reportes-ros/ros-form').then((m) => m.RosForm),
+      },
+      {
+        path: 'reportes-ros/:id',
+        data: { titulo: 'Detalle del reporte ROS' },
+        canActivate: [adminGuard],
+        loadComponent: () => import('./bussiness/reportes-ros/ros-detalle').then((m) => m.RosDetalle),
+      },
+      {
+        path: 'reportes-ros/:id/editar',
+        data: { titulo: 'Editar reporte ROS' },
+        canActivate: [adminGuard],
+        loadComponent: () => import('./bussiness/reportes-ros/ros-form').then((m) => m.RosForm),
+      },
 
       // Sistema
       { path: 'historial', data: { titulo: 'Historial de auditoría' }, canActivate: [adminGuard], loadComponent: proximamente },
