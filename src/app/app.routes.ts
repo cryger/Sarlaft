@@ -159,7 +159,12 @@ export const routes: Routes = [
       },
 
       // Sistema
-      { path: 'historial', data: { titulo: 'Historial de auditoría' }, canActivate: [adminGuard], loadComponent: proximamente },
+            {
+        path: 'historial',
+        data: { titulo: 'Historial de auditoría' },
+        canActivate: [adminGuard],
+        loadComponent: () => import('./bussiness/historial/historial').then((m) => m.Historial),
+      },
     ],
   },
 

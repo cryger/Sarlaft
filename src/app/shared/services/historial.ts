@@ -1,17 +1,16 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable } from '@angular/core';
 
-import { API_URL } from '../../core/api.config';
-import { RespuestaApi } from '../../core/api.types';
-import { Filtros } from '../../core/recurso-api';
+import { RecursoApi } from '../../core/recurso-api';
 
-export interface MovimientoHistorial {
+/** Una línea de la auditoría: quién hizo qué, sobre qué registro y cuándo. */
+export interface RegistroHistorial {
   id_historial: number;
   modulo: string;
+  /** id del registro afectado (en el módulo indicado) */
   registro: number;
   accion: string;
   usuario: number;
+  /** AAAA-MM-DD HH:MM:SS */
   fecha: string;
   ip: string | null;
   observaciones: string | null;
@@ -19,18 +18,10 @@ export interface MovimientoHistorial {
   usuario_login: string | null;
 }
 
-/** Solo lectura y solo para administradores. Filtros: modulo, usuario, accion, desde, hasta, q. */
+/** Solo lectura y solo para administradores. */
 @Injectable({ providedIn: 'root' })
-export class HistorialService {
-  private readonly http = inject(HttpClient);
-
-  listar(filtros: Filtros = {}): Observable<RespuestaApi<MovimientoHistorial[]>> {
-    let params = new HttpParams();
-    for (const [clave, valor] of Object.entries(filtros)) {
-      if (valor !== undefined && valor !== null && valor !== '') {
-        params = params.set(clave, String(valor));
-      }
-    }
-    return this.http.get<RespuestaApi<MovimientoHistorial[]>>(`${API_URL}/historial`, { params });
+export class HistorialService extends RecursoApi<RegistroHistorial, unknown> {
+  constructor() {
+    super('historial');
   }
 }

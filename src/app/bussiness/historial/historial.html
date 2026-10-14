@@ -1,0 +1,286 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+
+    <!-- Encabezado flotante -->
+    <div
+      class="relative -mt-6 mx-4 mb-6 flex flex-col gap-4 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20
+             lg:flex-row lg:items-center lg:justify-between"
+    >
+      <div>
+        <h6 class="text-base font-semibold">Historial de auditoría</h6>
+        <p class="mt-1 text-sm text-white/70">
+          {{ total() }} {{ total() === 1 ? 'movimiento' : 'movimientos' }}{{ hayFiltros() ? ' con los filtros aplicados' : '' }}
+          · Solo consulta
+        </p>
+      </div>
+
+      <div class="relative w-full sm:w-80">
+        <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/60">⌕</span>
+
+        <input
+          type="search"
+          placeholder="Registro, usuario o detalle..."
+          aria-label="Buscar en el historial"
+          [value]="termino()"
+          (input)="buscar($any($event.target).value)"
+          class="h-10 w-full rounded-lg border border-white/20 bg-white/10 pl-9 pr-3 text-sm text-white
+                 outline-none transition placeholder:text-white/60 focus:border-white/50 focus:bg-white/15"
+        />
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="mb-4 flex flex-wrap items-end gap-4 px-6">
+      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+        Módulo
+        <select
+          aria-label="Filtrar por módulo"
+          [value]="modulo()"
+          (change)="filtrar('modulo', $any($event.target).value)"
+          class="h-9 rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm font-normal normal-case
+                 text-gray-700 outline-none focus:border-blue-gray-500"
+        >
+          <option value="">Todos</option>
+          @for (m of modulos; track m) {
+            <option [value]="m">{{ m }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+        Acción
+        <select
+          aria-label="Filtrar por acción"
+          [value]="accion()"
+          (change)="filtrar('accion', $any($event.target).value)"
+          class="h-9 rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm font-normal normal-case
+                 text-gray-700 outline-none focus:border-blue-gray-500"
+        >
+          <option value="">Todas</option>
+          @for (a of acciones; track a) {
+            <option [value]="a">{{ a }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+        Usuario
+        <select
+          aria-label="Filtrar por usuario"
+          [value]="usuario()"
+          (change)="filtrar('usuario', $any($event.target).value)"
+          class="h-9 max-w-[220px] rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm font-normal normal-case
+                 text-gray-700 outline-none focus:border-blue-gray-500"
+        >
+          <option value="">Todos</option>
+          @for (u of usuarios(); track u.id_usuario) {
+            <option [value]="u.id_usuario">{{ u.nombre }} (&#64;{{ u.usuario }})</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+        Desde
+        <input
+          type="date"
+          aria-label="Fecha inicial"
+          [value]="desde()"
+          (change)="filtrar('desde', $any($event.target).value)"
+          class="h-9 rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm font-normal text-gray-700
+                 outline-none focus:border-blue-gray-500"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1 text-xs font-bold uppercase text-blue-gray-400">
+        Hasta
+        <input
+          type="date"
+          aria-label="Fecha final"
+          [value]="hasta()"
+          (change)="filtrar('hasta', $any($event.target).value)"
+          class="h-9 rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm font-normal text-gray-700
+                 outline-none focus:border-blue-gray-500"
+        />
+      </label>
+
+      @if (hayFiltros()) {
+        <button
+          type="button"
+          (click)="limpiarFiltros()"
+          class="h-9 text-xs font-semibold text-blue-500 transition hover:text-blue-700"
+        >
+          Limpiar filtros
+        </button>
+      }
+
+      @if (rangoInvalido()) {
+        <p class="h-9 pt-2 text-xs text-amber-700">La fecha inicial es posterior a la final.</p>
+      }
+    </div>
+
+    <!-- Error al cargar -->
+    @if (error()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">No se pudo cargar el historial</p>
+          <p class="mt-1 text-sm text-red-600">{{ error() }}</p>
+        </div>
+        <button type="button" (click)="cargar()" class="text-sm font-semibold text-red-700 transition hover:text-red-900">
+          Reintentar
+        </button>
+      </div>
+    }
+
+    <!-- Tabla -->
+    @if (!error()) {
+      <div class="overflow-x-auto pb-2" [class.opacity-60]="cargando()" [attr.aria-busy]="cargando()">
+        <table class="w-full min-w-[980px] table-auto">
+          <thead>
+            <tr>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Fecha y hora</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Usuario</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Módulo</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Acción</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">Detalle</th>
+              <th class="border-b border-blue-gray-50 px-6 py-3 text-left text-[11px] font-bold uppercase text-blue-gray-400">IP</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (r of filas(); track r.id_historial) {
+              <tr class="transition hover:bg-gray-50 [&:last-child>td]:border-b-0">
+                <td class="whitespace-nowrap border-b border-blue-gray-50 px-6 py-3 text-xs font-medium tabular-nums text-blue-gray-600">
+                  {{ fechaHora(r.fecha) }}
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <p class="text-sm font-semibold text-blue-gray-900">{{ r.usuario_nombre || 'Usuario eliminado' }}</p>
+                  @if (r.usuario_login) {
+                    <p class="text-xs text-blue-gray-500">&#64;{{ r.usuario_login }}</p>
+                  }
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3 text-xs font-medium text-blue-gray-700">{{ r.modulo }}</td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <span
+                    class="inline-block w-fit whitespace-nowrap rounded-md bg-gradient-to-tr px-2 py-0.5 text-[11px] font-medium uppercase text-white"
+                    [class]="estiloAccion(r.accion)"
+                  >
+                    {{ r.accion }}
+                  </span>
+                </td>
+
+                <td class="border-b border-blue-gray-50 px-6 py-3">
+                  <p class="max-w-md break-words text-xs text-blue-gray-700">
+                    @if (enlace(r); as ruta) {
+                      <a [routerLink]="ruta" class="font-bold text-blue-gray-900 transition hover:text-blue-500">
+                        {{ detalle(r).split(' | ')[0] }}
+                      </a>
+                      @if (detalle(r).includes(' | ')) {
+                        <span class="text-blue-gray-500"> · {{ detalle(r).split(' | ').slice(1).join(' | ') }}</span>
+                      }
+                    } @else {
+                      {{ detalle(r) }}
+                    }
+                  </p>
+                </td>
+
+                <td class="whitespace-nowrap border-b border-blue-gray-50 px-6 py-3 text-xs tabular-nums text-blue-gray-500">
+                  {{ r.ip || '—' }}
+                </td>
+              </tr>
+            } @empty {
+              @if (!cargando()) {
+                <tr>
+                  <td colspan="6" class="px-6 py-16 text-center">
+                    <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-blue-gray-50 text-2xl text-blue-gray-400">◷</div>
+
+                    @if (hayFiltros()) {
+                      <h3 class="mt-4 font-semibold text-blue-gray-900">No se encontraron movimientos</h3>
+                      <p class="mx-auto mt-1 max-w-md text-sm text-blue-gray-600">
+                        Ninguno coincide con la búsqueda o los filtros elegidos.
+                      </p>
+                      <button
+                        type="button"
+                        (click)="limpiarFiltros()"
+                        class="mt-4 text-sm font-semibold text-blue-500 transition hover:text-blue-700"
+                      >
+                        Limpiar filtros
+                      </button>
+                    } @else {
+                      <h3 class="mt-4 font-semibold text-blue-gray-900">Todavía no hay movimientos</h3>
+                      <p class="mx-auto mt-1 max-w-md text-sm text-blue-gray-600">
+                        Aquí aparecerá quién inicia sesión y quién crea, edita, revisa o elimina registros.
+                      </p>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+
+        @if (cargando() && filas().length === 0) {
+          <div class="flex flex-col items-center justify-center px-6 py-16">
+            <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+            <p class="mt-4 text-sm text-blue-gray-600">Cargando historial...</p>
+          </div>
+        }
+      </div>
+
+      <!-- Paginación -->
+      @if (total() > 0) {
+        <div class="flex flex-col gap-3 border-t border-blue-gray-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm text-blue-gray-600">
+            Mostrando
+            <span class="font-semibold text-blue-gray-900">{{ primeraFila() }}–{{ ultimaFila() }}</span>
+            de <span class="font-semibold text-blue-gray-900">{{ total() }}</span>
+          </p>
+
+          <div class="flex flex-wrap items-center gap-4">
+            <label class="flex items-center gap-2 text-xs text-blue-gray-500">
+              Filas por página
+              <select
+                aria-label="Filas por página"
+                [value]="porPagina()"
+                (change)="cambiarPorPagina($any($event.target).value)"
+                class="h-8 rounded-[7px] border border-blue-gray-200 bg-white px-2 text-sm text-gray-700 outline-none focus:border-blue-gray-500"
+              >
+                @for (n of opcionesPorPagina; track n) {
+                  <option [value]="n">{{ n }}</option>
+                }
+              </select>
+            </label>
+
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="irA(pagina() - 1)"
+                [disabled]="pagina() <= 1"
+                class="h-8 rounded-lg border border-blue-gray-200 px-3 text-xs font-bold uppercase text-blue-gray-700
+                       transition hover:bg-blue-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Anterior
+              </button>
+
+              <span class="text-xs text-blue-gray-600">Página {{ pagina() }} de {{ totalPaginas() }}</span>
+
+              <button
+                type="button"
+                (click)="irA(pagina() + 1)"
+                [disabled]="pagina() >= totalPaginas()"
+                class="h-8 rounded-lg border border-blue-gray-200 px-3 text-xs font-bold uppercase text-blue-gray-700
+                       transition hover:bg-blue-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
