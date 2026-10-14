@@ -23,6 +23,8 @@ export interface FormularioBase {
   declarante_telefono?: string | null;
   declarante_correo?: string | null;
   declarante_direccion?: string | null;
+  declarante_cargo?: string | null;
+  declarante_dependencia?: string | null;
   revisor_nombre?: string | null;
 }
 
