@@ -19,6 +19,8 @@ export class Login {
   password = signal('');
   cargando = signal(false);
   error = signal('');
+  /** Muestra u oculta la contraseña mientras se escribe. */
+  mostrarClave = signal(false);
 
   constructor() {
     if (this.auth.autenticado()) {

@@ -48,6 +48,13 @@ export class AuthService {
         map((r) => r.data.usuario),
       );
   }
+    /** Refresca los datos del usuario de la sesión (por ejemplo después de editar su perfil). */
+  actualizarUsuario(usuario: UsuarioSesion): void {
+    const token = this._token();
+    if (token) {
+      this.guardar(token, usuario);
+    }
+  }
 
   logout(redirigir = true): void {
     this._token.set(null);
