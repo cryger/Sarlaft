@@ -9,7 +9,7 @@ export type EstadoFormulario = 'Pendiente' | 'Aprobado' | 'Rechazado';
 /** Campos que comparten transacciones, ausencias y reportes ROS. */
 export interface FormularioBase {
   consecutivo: string;
-  id_declarante: number;
+  id_declarante?: number | null;
   fecha_registro: string;
   ip: string | null;
   estado: EstadoFormulario;

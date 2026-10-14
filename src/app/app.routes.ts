@@ -136,6 +136,28 @@ export const routes: Routes = [
         loadComponent: () => import('./bussiness/reportes-ros/ros-form').then((m) => m.RosForm),
       },
 
+            {
+        path: 'transacciones-multiples',
+        data: { titulo: 'Transacciones múltiples' },
+        loadComponent: () => import('./bussiness/multiples/multiples').then((m) => m.Multiples),
+      },
+      // "nuevo" debe ir antes de ":id"
+      {
+        path: 'transacciones-multiples/nuevo',
+        data: { titulo: 'Nuevo reporte de transacciones múltiples' },
+        loadComponent: () => import('./bussiness/multiples/multiple-form').then((m) => m.MultipleForm),
+      },
+      {
+        path: 'transacciones-multiples/:id',
+        data: { titulo: 'Detalle de transacciones múltiples' },
+        loadComponent: () => import('./bussiness/multiples/multiple-detalle').then((m) => m.MultipleDetalle),
+      },
+      {
+        path: 'transacciones-multiples/:id/editar',
+        data: { titulo: 'Editar transacciones múltiples' },
+        loadComponent: () => import('./bussiness/multiples/multiple-form').then((m) => m.MultipleForm),
+      },
+
       // Sistema
       { path: 'historial', data: { titulo: 'Historial de auditoría' }, canActivate: [adminGuard], loadComponent: proximamente },
     ],

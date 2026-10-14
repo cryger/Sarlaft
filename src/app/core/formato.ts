@@ -42,3 +42,10 @@ export const ESTILOS_ESTADO: Record<string, string> = {
 export function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
+
+/** 2026-10 -> octubre de 2026 */
+export function formatoPeriodo(valor: string | null | undefined): string {
+  if (!valor || !/^\d{4}-\d{2}$/.test(valor)) return valor || '—';
+  const [a, m] = valor.split('-');
+  return new Date(Number(a), Number(m) - 1, 1).toLocaleDateString('es-CO', { month: 'long', year: 'numeric' });
+}

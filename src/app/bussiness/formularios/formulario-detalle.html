@@ -130,6 +130,45 @@
           }
         }
 
+        <!-- Tablas de filas (si el formato las tiene) -->
+        @for (tb of config().tablas ?? []; track tb.titulo) {
+          <section class="mb-8">
+            <h3 class="seccion-titulo">{{ tb.titulo }}</h3>
+            <div class="overflow-x-auto rounded-lg border border-blue-gray-50">
+              <table class="w-full min-w-[720px] table-auto text-sm">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-2 text-left text-[11px] font-bold uppercase text-blue-gray-400">N.º</th>
+                    @for (c of tb.columnas; track c.titulo) {
+                      <th
+                        class="px-4 py-2 text-[11px] font-bold uppercase text-blue-gray-400"
+                        [class]="c.derecha ? 'text-right' : 'text-left'"
+                      >
+                        {{ c.titulo }}
+                      </th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (fila of tb.filas(fr); track $index) {
+                    <tr class="border-t border-blue-gray-50">
+                      <td class="px-4 py-2 text-xs font-semibold text-blue-gray-500">{{ $index + 1 }}</td>
+                      @for (c of tb.columnas; track c.titulo) {
+                        <td
+                          class="px-4 py-2 text-blue-gray-900"
+                          [class]="c.derecha ? 'text-right font-semibold tabular-nums' : 'text-xs'"
+                        >
+                          {{ c.valor(fila) }}
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </section>
+        }
+
         <!-- Revisión -->
         <section class="mb-8">
           <h3 class="seccion-titulo">Revisión</h3>

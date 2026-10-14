@@ -38,8 +38,10 @@ const MENU: SeccionMenu[] = [
     titulo: 'Operaciones',
     items: [
       { ruta: '/transacciones', etiqueta: 'Transacciones en efectivo', icono: '$' },
+      { ruta: '/transacciones-multiples', etiqueta: 'Transacciones múltiples', icono: '∑' },
       { ruta: '/ausencias', etiqueta: 'Ausencias', icono: '▣' },
       { ruta: '/reportes-ros', rutaGestor: '/reportes-ros/nuevo', etiqueta: 'Reportes ROS', icono: '▤' },
+
     ],
   },
   {

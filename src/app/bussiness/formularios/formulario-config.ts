@@ -43,6 +43,19 @@ export interface SeccionDetalle<T> {
   ocultaSi?: (f: T) => boolean;
 }
 
+export interface ColumnaTabla {
+  titulo: string;
+  valor: (fila: any) => string;
+  derecha?: boolean;
+}
+
+/** Tabla de filas dentro del detalle (por ejemplo las transacciones de un reporte múltiple). */
+export interface TablaDetalle<T> {
+  titulo: string;
+  filas: (f: T) => any[];
+  columnas: ColumnaTabla[];
+}
+
 export interface ConfigDetalle<T extends FormularioBase> {
   titulo: (f: T) => string;
   subtitulo: string;
@@ -54,4 +67,6 @@ export interface ConfigDetalle<T extends FormularioBase> {
   /** Observación de la revisión (en ROS la columna tiene otro nombre). */
   observacionRevision: (f: T) => string | null;
   secciones: SeccionDetalle<T>[];
+    /** Tablas que se muestran después de las secciones. */
+  tablas?: TablaDetalle<T>[];
 }
