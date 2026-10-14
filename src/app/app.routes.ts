@@ -91,7 +91,26 @@ export const routes: Routes = [
         data: { titulo: 'Editar transacción' },
         loadComponent: () => import('./bussiness/transacciones/transaccion-form').then((m) => m.TransaccionForm),
       },
-      { path: 'ausencias', data: { titulo: 'Ausencias' }, loadComponent: proximamente },
+            {
+        path: 'ausencias',
+        data: { titulo: 'Ausencia de transacciones' },
+        loadComponent: () => import('./bussiness/ausencias/ausencias').then((m) => m.Ausencias),
+      },
+      {
+        path: 'ausencias/nuevo',
+        data: { titulo: 'Nuevo reporte de ausencia' },
+        loadComponent: () => import('./bussiness/ausencias/ausencias-form').then((m) => m.AusenciaForm),
+      },
+      {
+        path: 'ausencias/:id',
+        data: { titulo: 'Detalle de ausencia' },
+        loadComponent: () => import('./bussiness/ausencias/ausencias-detalle').then((m) => m.AusenciaDetalle),
+      },
+      {
+        path: 'ausencias/:id/editar',
+        data: { titulo: 'Editar ausencia' },
+        loadComponent: () => import('./bussiness/ausencias/ausencias-form').then((m) => m.AusenciaForm),
+      },
       { path: 'reportes-ros', data: { titulo: 'Reportes ROS' }, loadComponent: proximamente },
 
       // Sistema

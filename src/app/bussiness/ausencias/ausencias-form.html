@@ -1,0 +1,249 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+
+    <!-- Encabezado flotante -->
+    <div
+      class="relative -mt-6 mx-4 mb-6 flex items-center justify-between gap-4 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+    >
+      <div>
+        <h6 class="text-base font-semibold">
+          {{ editando ? 'Editar ausencia' + (actual() ? ' ' + actual()!.consecutivo : '') : 'Ausencia de transacciones en efectivo' }}
+        </h6>
+        <p class="mt-1 text-sm text-white/70">
+          Formato E-PL-FO-13 · Solo si en el periodo el área no realizó ni recibió transacciones en efectivo,
+          ni operaciones intentadas, inusuales o sospechosas
+        </p>
+      </div>
+
+      <a
+        [routerLink]="editando ? ['/ausencias', id] : ['/ausencias']"
+        class="shrink-0 text-xs font-bold uppercase text-white/80 transition hover:text-white"
+      >
+        ← Volver
+      </a>
+    </div>
+
+    @if (cargando()) {
+      <div class="flex flex-col items-center justify-center px-6 py-16" aria-busy="true">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+        <p class="mt-4 text-sm text-blue-gray-600">Cargando formulario...</p>
+      </div>
+    } @else if (errorCarga()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">No se pudo cargar el formulario</p>
+          <p class="mt-1 text-sm text-red-600">{{ errorCarga() }}</p>
+        </div>
+        <a routerLink="/ausencias" class="text-sm font-semibold text-red-700 transition hover:text-red-900">Volver a la lista</a>
+      </div>
+    } @else if (bloqueada()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 font-bold text-amber-700">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-amber-900">Este reporte ya no se puede editar</p>
+          <p class="mt-1 text-sm text-amber-800">
+            Fue {{ actual()!.estado === 'Aprobado' ? 'aprobado' : 'rechazado' }} por un administrador.
+            Solo un administrador puede modificarlo.
+          </p>
+        </div>
+        <a [routerLink]="['/ausencias', id]" class="text-sm font-semibold text-amber-900 transition hover:text-amber-700">Ver detalle</a>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="px-6 pb-6">
+
+        @if (editando && actual() && actual()!.estado !== 'Pendiente') {
+          <div class="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4" role="note">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 font-bold text-amber-700">!</span>
+            <p class="flex-1 pt-1 text-sm text-amber-900">
+              Este reporte ya está <strong>{{ actual()!.estado.toLowerCase() }}</strong>. Al editarlo se conserva su estado y su revisión.
+            </p>
+          </div>
+        }
+
+        @if (error()) {
+          <div class="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+            <p class="flex-1 pt-1 text-sm font-medium text-red-700">{{ error() }}</p>
+          </div>
+        }
+
+        <!-- ============ Datos generales ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Datos generales</legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <app-campo etiqueta="Entidad / Institución" para="entidad" [requerido]="true" [error]="mensaje('entidad')">
+              <input id="entidad" class="campo" formControlName="entidad" autocomplete="off"
+                     [attr.aria-invalid]="mensaje('entidad') ? 'true' : null" aria-describedby="err-entidad" />
+            </app-campo>
+
+            <app-campo etiqueta="Área / proceso" para="area_proceso" [requerido]="true" [error]="mensaje('area_proceso')">
+              <select id="area_proceso" class="campo" formControlName="area_proceso"
+                      [attr.aria-invalid]="mensaje('area_proceso') ? 'true' : null" aria-describedby="err-area_proceso">
+                <option value="" disabled>Seleccione un área</option>
+                @for (a of areas(); track a) {
+                  <option [value]="a">{{ a }}</option>
+                }
+              </select>
+            </app-campo>
+          </div>
+
+          <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label for="buscar-declarante" class="etiqueta">Buscar al responsable</label>
+              <input
+                id="buscar-declarante"
+                type="search"
+                autocomplete="off"
+                placeholder="Nombre o documento"
+                class="campo"
+                [value]="buscador.busqueda()"
+                (input)="buscador.busqueda.set($any($event.target).value)"
+              />
+              <p class="mt-1 min-h-4 text-xs text-blue-gray-500">
+                {{ buscador.opciones().length }} de {{ buscador.declarantes().length }} declarantes ·
+                <a routerLink="/declarantes/nuevo" target="_blank" class="font-semibold text-blue-500 hover:text-blue-700">Registrar nuevo</a>
+                ·
+                <button type="button" (click)="actualizarDeclarantes()" [disabled]="buscador.actualizando()"
+                        class="font-semibold text-blue-500 hover:text-blue-700 disabled:opacity-50">
+                  {{ buscador.actualizando() ? 'Actualizando...' : 'Actualizar lista' }}
+                </button>
+              </p>
+            </div>
+
+            <app-campo etiqueta="Responsable del proceso" para="id_declarante" [requerido]="true" [error]="mensaje('id_declarante')">
+              <select id="id_declarante" class="campo" formControlName="id_declarante"
+                      [attr.aria-invalid]="mensaje('id_declarante') ? 'true' : null" aria-describedby="err-id_declarante">
+                <option [ngValue]="null" disabled>Selecciona al responsable</option>
+                @for (d of buscador.opciones(); track d.id_declarante) {
+                  <option [ngValue]="d.id_declarante">{{ d.nombre }} · {{ d.tipo_documento }} {{ d.numero_documento }}</option>
+                }
+              </select>
+            </app-campo>
+          </div>
+
+          @if (buscador.elegido(); as d) {
+            <div class="mt-5 rounded-lg border border-blue-gray-100 bg-gray-50 p-4" id="datos-responsable">
+              <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
+                <div>
+                  <dt class="text-xs font-semibold text-blue-gray-500">Cargo</dt>
+                  <dd class="font-medium text-blue-gray-900">{{ d.cargo || '—' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs font-semibold text-blue-gray-500">Teléfono</dt>
+                  <dd class="font-medium text-blue-gray-900">{{ d.telefono || '—' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs font-semibold text-blue-gray-500">Correo electrónico</dt>
+                  <dd class="break-all font-medium text-blue-gray-900">{{ d.correo || '—' }}</dd>
+                </div>
+              </dl>
+              @if (!d.telefono || !d.correo) {
+                <p class="mt-3 text-xs text-amber-800" role="note">
+                  A este responsable le falta {{ !d.telefono && !d.correo ? 'el teléfono y el correo' : !d.telefono ? 'el teléfono' : 'el correo' }}.
+                  <a [routerLink]="['/declarantes', d.id_declarante, 'editar']" target="_blank" class="font-semibold underline">Completarlo</a>
+                  (se abre en otra pestaña) y luego pulsa «Actualizar lista».
+                </p>
+              }
+            </div>
+          }
+        </fieldset>
+
+        <!-- ============ Periodo reportado ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Periodo reportado</legend>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+            <app-campo etiqueta="Desde" para="periodo_desde" [requerido]="true" [error]="mensaje('periodo_desde')">
+              <input id="periodo_desde" type="date" class="campo" formControlName="periodo_desde" [max]="hoy"
+                     [attr.aria-invalid]="mensaje('periodo_desde') ? 'true' : null" aria-describedby="err-periodo_desde" />
+            </app-campo>
+
+            <app-campo etiqueta="Hasta" para="periodo_hasta" [requerido]="true" [error]="mensaje('periodo_hasta')">
+              <input id="periodo_hasta" type="date" class="campo" formControlName="periodo_hasta" [max]="hoy"
+                     [attr.aria-invalid]="mensaje('periodo_hasta') ? 'true' : null" aria-describedby="err-periodo_hasta" />
+            </app-campo>
+
+            <app-campo etiqueta="Fecha de elaboración" para="fecha_elaboracion" [requerido]="true" [error]="mensaje('fecha_elaboracion')">
+              <input id="fecha_elaboracion" type="date" class="campo" formControlName="fecha_elaboracion" [max]="hoy"
+                     [attr.aria-invalid]="mensaje('fecha_elaboracion') ? 'true' : null" aria-describedby="err-fecha_elaboracion" />
+            </app-campo>
+          </div>
+        </fieldset>
+
+        <!-- ============ Declaración ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Declaración</legend>
+
+          <p class="mb-4 rounded-lg border border-blue-gray-100 bg-gray-50 p-4 text-sm leading-relaxed text-blue-gray-700">
+            {{ textoDeclaracion }}
+          </p>
+
+          <label class="flex cursor-pointer items-start gap-2 text-sm text-blue-gray-800">
+            <input id="declaracion" type="checkbox" formControlName="declaracion" class="mt-0.5 h-4 w-4 accent-blue-600"
+                   [attr.aria-invalid]="mensaje('declaracion') ? 'true' : null" aria-describedby="err-declaracion" />
+            <span>Certifico la declaración anterior. <span class="text-red-500">*</span></span>
+          </label>
+          <p id="err-declaracion" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje('declaracion') }}</p>
+        </fieldset>
+
+        <!-- ============ Verificación ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Verificación</legend>
+
+          <div class="space-y-5">
+            @for (p of preguntas; track p.campo) {
+              <div>
+                <p [id]="'lbl-' + p.campo" class="mb-2 text-sm font-medium text-blue-gray-700">
+                  {{ p.texto }} <span class="text-red-500">*</span>
+                </p>
+                <div role="radiogroup" [attr.aria-labelledby]="'lbl-' + p.campo" [attr.aria-describedby]="'err-' + p.campo" class="flex gap-6">
+                  @for (o of opcionesSiNo; track o.valor) {
+                    <label class="flex cursor-pointer items-center gap-2 text-sm text-blue-gray-700">
+                      <input type="radio" [formControlName]="p.campo" [value]="o.valor" [attr.value]="o.valor" class="h-4 w-4 accent-blue-600" />
+                      {{ o.etiqueta }}
+                    </label>
+                  }
+                </div>
+                <p [id]="'err-' + p.campo" class="mt-1 min-h-4 text-xs text-red-600">{{ mensaje(p.campo) }}</p>
+              </div>
+            }
+          </div>
+
+          <div class="mt-3">
+            <app-campo etiqueta="Observaciones" para="observaciones" nota="si aplica">
+              <textarea id="observaciones" rows="3" class="campo-area" formControlName="observaciones"></textarea>
+            </app-campo>
+          </div>
+        </fieldset>
+
+        <!-- ============ Acciones ============ -->
+        <div class="flex flex-col-reverse items-stretch gap-3 border-t border-blue-gray-50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-xs text-blue-gray-500"><span class="text-red-500">*</span> Campo obligatorio</p>
+
+          <div class="flex flex-col-reverse gap-3 sm:flex-row">
+            <a
+              [routerLink]="editando ? ['/ausencias', id] : ['/ausencias']"
+              class="inline-flex h-11 items-center justify-center rounded-lg px-5 text-xs font-bold uppercase
+                     text-gray-600 transition hover:bg-blue-gray-500/10"
+            >
+              Cancelar
+            </a>
+
+            <button
+              type="submit"
+              [disabled]="guardando() || buscador.declarantes().length === 0"
+              class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+                     bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg
+                     disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ guardando() ? 'Guardando...' : editando ? 'Guardar cambios' : 'Enviar formato' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    }
+  </div>
+</div>
