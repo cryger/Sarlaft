@@ -9,7 +9,7 @@ const siNo = (v: string | null) => (v === 'SI' ? 'SÃ­' : v === 'NO' ? 'No' : 'â€
 
 /** Detalle del formato E-PL-FO-13 (Ausencia de transacciones en efectivo). */
 @Component({
-  selector: 'app-ausencia-detalle',
+  selector: 'app-ausencias-detalle',
   imports: [FormularioDetalle],
   template: `<app-formulario-detalle [config]="config" [api]="api" />`,
 })

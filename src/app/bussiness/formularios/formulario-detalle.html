@@ -1,3 +1,173 @@
+@if (modoPdf) {
+  <!-- ===================== Documento para imprimir / guardar como PDF ===================== -->
+  <div class="min-h-screen bg-gray-100 px-3 py-6 print:bg-white print:p-0">
+
+    <!-- Barra (no se imprime) -->
+    <div class="no-imprimir mx-auto mb-4 flex max-w-[210mm] items-center justify-between gap-3">
+      <a [routerLink]="[config().ruta, id]" class="text-xs font-bold uppercase text-blue-gray-600 transition hover:text-blue-gray-900">
+        ← Volver al detalle
+      </a>
+      @if (f()?.estado === 'Aprobado') {
+        <button
+          type="button"
+          id="boton-imprimir"
+          (click)="imprimir()"
+          class="h-10 rounded-lg px-5 text-xs font-bold uppercase text-white shadow-md transition
+                 bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg"
+        >
+          Imprimir / Guardar como PDF
+        </button>
+      }
+    </div>
+
+    @if (cargando()) {
+      <div class="no-imprimir flex flex-col items-center justify-center py-16" aria-busy="true">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+        <p class="mt-4 text-sm text-blue-gray-600">Preparando el documento...</p>
+      </div>
+    } @else if (error()) {
+      <div class="no-imprimir mx-auto max-w-[210mm] rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <p class="font-semibold text-red-800">No se pudo cargar el documento</p>
+        <p class="mt-1 text-sm text-red-600">{{ error() }}</p>
+      </div>
+    } @else if (f(); as fr) {
+      @if (fr.estado !== 'Aprobado') {
+        <div class="no-imprimir mx-auto max-w-[210mm] rounded-lg border border-amber-200 bg-amber-50 p-5" role="alert" id="aviso-no-aprobado">
+          <p class="font-semibold text-amber-900">Este formato todavía no se puede descargar en PDF</p>
+          <p class="mt-1 text-sm text-amber-800">
+            El PDF solo se genera cuando el formato ya fue <strong>aprobado</strong> por el Oficial de Cumplimiento.
+            Estado actual: <strong>{{ fr.estado }}</strong>.
+          </p>
+        </div>
+      } @else {
+        <article id="documento" class="mx-auto max-w-[210mm] bg-white p-[10mm] text-[11px] leading-snug text-gray-900 shadow-md print:max-w-none print:p-0 print:shadow-none">
+          <table class="w-full border-collapse">
+
+            <!-- Encabezado oficial: se repite en cada hoja -->
+            <thead>
+              <tr>
+                <td class="pb-3">
+                  <table class="w-full border-collapse border border-gray-800 text-center">
+                    <tr>
+                      <td rowspan="2" class="w-[26%] border border-gray-800 p-2">
+                        <img src="logo-hsjg.png" width="446" height="462" alt="E.S.E. Hospital San José del Guaviare" class="mx-auto h-16 w-auto" />
+                      </td>
+                      <td class="border border-gray-800 p-1.5 text-sm font-bold">PLANEACIÓN</td>
+                      <td class="w-[27%] border border-gray-800 p-1.5 text-left text-[10px] font-bold">CÓDIGO: {{ documento()?.codigo }}</td>
+                    </tr>
+                    <tr>
+                      <td class="border border-gray-800 p-1.5 text-[11px] font-bold uppercase">{{ documento()?.titulo }}</td>
+                      <td class="border border-gray-800 p-0 text-left text-[10px] font-bold">
+                        <div class="p-1.5" [class.border-b]="documento()?.fechaAprobacion" [class.border-gray-800]="documento()?.fechaAprobacion">
+                          VERSIÓN: {{ documento()?.version }}
+                        </div>
+                        @if (documento()?.fechaAprobacion) {
+                          <div class="p-1.5">FECHA DE APROBACIÓN: {{ documento()?.fechaAprobacion }}</div>
+                        }
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>
+                  <p class="mb-3 flex flex-wrap justify-between gap-x-4 border border-gray-300 bg-gray-50 px-2 py-1 text-[10px]">
+                    <span><strong>Consecutivo:</strong> {{ fr.consecutivo }}</span>
+                    <span><strong>Estado:</strong> {{ fr.estado }}</span>
+                    <span><strong>Registrado el:</strong> {{ fechaHora(fr.fecha_registro) }}</span>
+                  </p>
+
+                  @for (sec of config().secciones; track sec.titulo) {
+                    @if (!sec.ocultaSi || !sec.ocultaSi(fr)) {
+                      <section class="evitar-corte mb-3">
+                        <h3 class="border border-gray-800 bg-blue-gray-100 px-2 py-1 text-center text-[10px] font-bold uppercase">{{ sec.titulo }}</h3>
+                        <div class="grid border-l border-t border-gray-500" [class]="sec.columnas === 3 ? 'grid-cols-3' : 'grid-cols-2'">
+                          @for (c of sec.campos; track c.etiqueta) {
+                            <div
+                              class="border-b border-r border-gray-500 px-2 py-1"
+                              [class]="c.completo ? (sec.columnas === 3 ? 'col-span-3' : 'col-span-2') : ''"
+                            >
+                              <p class="text-[8px] font-bold uppercase text-gray-600">{{ c.etiqueta }}</p>
+                              <p class="whitespace-pre-line text-[11px]" [class.font-bold]="c.destacado">{{ c.valor(fr) }}</p>
+                            </div>
+                          }
+                        </div>
+                      </section>
+                    }
+                  }
+
+                  @for (tb of config().tablas ?? []; track tb.titulo) {
+                    <section class="mb-3">
+                      <h3 class="border border-gray-800 bg-blue-gray-100 px-2 py-1 text-center text-[10px] font-bold uppercase">{{ tb.titulo }}</h3>
+                      <table class="w-full border-collapse text-[10px]">
+                        <thead>
+                          <tr class="bg-gray-100">
+                            <th class="border border-gray-500 px-1.5 py-1 text-left">N.º</th>
+                            @for (c of tb.columnas; track c.titulo) {
+                              <th class="border border-gray-500 px-1.5 py-1" [class]="c.derecha ? 'text-right' : 'text-left'">{{ c.titulo }}</th>
+                            }
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (fila of tb.filas(fr); track $index) {
+                            <tr class="evitar-corte">
+                              <td class="border border-gray-500 px-1.5 py-1">{{ $index + 1 }}</td>
+                              @for (c of tb.columnas; track c.titulo) {
+                                <td class="border border-gray-500 px-1.5 py-1" [class]="c.derecha ? 'text-right font-semibold' : ''">{{ c.valor(fila) }}</td>
+                              }
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </section>
+                  }
+
+                  <!-- Aprobación del Oficial de Cumplimiento -->
+                  <section class="evitar-corte mb-3" id="bloque-aprobacion">
+                    <h3 class="border border-gray-800 bg-blue-gray-100 px-2 py-1 text-center text-[10px] font-bold uppercase">Revisión y aprobación</h3>
+                    <div class="grid grid-cols-2 border-l border-t border-gray-500">
+                      <div class="border-b border-r border-gray-500 px-2 py-1">
+                        <p class="text-[8px] font-bold uppercase text-gray-600">Aprobado por</p>
+                        <p class="text-[11px] font-bold">{{ fr.revisor_nombre || '—' }}</p>
+                      </div>
+                      <div class="border-b border-r border-gray-500 px-2 py-1">
+                        <p class="text-[8px] font-bold uppercase text-gray-600">Fecha de aprobación</p>
+                        <p class="text-[11px]">{{ fechaHora(fr.fecha_aprobacion) }}</p>
+                      </div>
+                      <div class="col-span-2 border-b border-r border-gray-500 px-2 py-1">
+                        <p class="text-[8px] font-bold uppercase text-gray-600">Observación</p>
+                        <p class="whitespace-pre-line text-[11px]">{{ config().observacionRevision(fr) || 'Sin observación' }}</p>
+                      </div>
+                      <div class="col-span-2 border-b border-r border-gray-500 px-2 pb-2 pt-8">
+                        <p class="w-72 border-t border-gray-700 pt-1 text-[9px]">Firma y sello del Oficial de Cumplimiento</p>
+                      </div>
+                    </div>
+                    <p class="mt-1 text-[8px] text-gray-500">
+                      Documento generado desde el sistema SARLAFT por {{ generadoPor || 'un usuario autorizado' }} el {{ generadoEn }}.
+                    </p>
+                  </section>
+                </td>
+              </tr>
+            </tbody>
+
+            <!-- Pie oficial: se repite en cada hoja -->
+            <tfoot>
+              <tr>
+                <td class="pt-3 text-center text-[8px] italic text-gray-600">
+                  ESTE DOCUMENTO ES PROPIEDAD DE LA E.S.E. HOSPITAL SAN JOSÉ DEL GUAVIARE. PROHIBIDA SU REPRODUCCIÓN POR CUALQUIER MEDIO,
+                  SIN AUTORIZACIÓN ESCRITA DEL GERENTE.
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </article>
+      }
+    }
+  </div>
+} @else {
 <div class="mb-8 mt-12">
   <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
 
@@ -93,6 +263,18 @@
                      text-blue-gray-700 transition hover:bg-blue-gray-50"
             >
               Editar
+            </a>
+          }
+
+          @if (fr.estado === 'Aprobado' && documento()) {
+            <a
+              [routerLink]="['/documento' + config().ruta, config().id(fr)]"
+              [queryParams]="{ imprimir: 1 }"
+              id="boton-pdf"
+              class="inline-flex h-10 items-center gap-2 rounded-lg px-5 text-xs font-bold uppercase text-white shadow-md transition
+                     bg-gradient-to-tr from-orange-600 to-orange-400 hover:shadow-lg"
+            >
+              Descargar PDF
             </a>
           }
 
@@ -223,6 +405,7 @@
     }
   </div>
 </div>
+}
 
 <!-- ===================== Ventana: revisión ===================== -->
 <dialog

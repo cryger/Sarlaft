@@ -65,3 +65,37 @@
            aria-invalid:border-red-400 aria-invalid:focus:border-red-500;
   }
 }
+
+/* ---- Impresión / PDF de los formatos ---- */
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  .evitar-corte {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+}

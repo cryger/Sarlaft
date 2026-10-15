@@ -25,6 +25,38 @@ export const routes: Routes = [
     loadComponent: () => import('./bussiness/login/login').then((m) => m.Login),
   },
 
+    // Documentos para imprimir o guardar como PDF (sin menú ni encabezado). Solo formatos aprobados.
+  {
+    path: 'documento/transacciones/:id',
+    canActivate: [authGuard],
+    data: { pdf: true },
+    loadComponent: () => import('./bussiness/transacciones/transaccion-detalle').then((m) => m.TransaccionDetalle),
+  },
+  {
+    path: 'documento/ausencias/:id',
+    canActivate: [authGuard],
+    data: { pdf: true },
+    loadComponent: () => import('./bussiness/ausencias/ausencias-detalle').then((m) => m.AusenciaDetalle),
+  },
+  {
+    path: 'documento/reportes-ros/:id',
+    canActivate: [authGuard, adminGuard],
+    data: { pdf: true },
+    loadComponent: () => import('./bussiness/reportes-ros/ros-detalle').then((m) => m.RosDetalle),
+  },
+  {
+    path: 'documento/transacciones-multiples/:id',
+    canActivate: [authGuard],
+    data: { pdf: true },
+    loadComponent: () => import('./bussiness/multiples/multiple-detalle').then((m) => m.MultipleDetalle),
+  },
+  {
+    path: 'documento/vinculacion-terceros/:id',
+    canActivate: [authGuard],
+    data: { pdf: true },
+    loadComponent: () => import('./bussiness/vinculacion/vinculacion-detalle').then((m) => m.VinculacionDetalle),
+  },
+
   // Privadas (requieren sesión)
   {
     path: '',
@@ -187,6 +219,8 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./bussiness/historial/historial').then((m) => m.Historial),
       },
+
+
     ],
   },
 

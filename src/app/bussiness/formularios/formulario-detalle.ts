@@ -1,9 +1,11 @@
 import { Component, ElementRef, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { mensajeApi } from '../../core/api.types';
 import { AuthService } from '../../core/auth.service';
+import { DOCUMENTOS } from '../../core/documentos';
 import { ESTILOS_ESTADO, formatoFechaHora } from '../../core/formato';
 import { EstadoFormulario, FormularioApi, FormularioBase } from '../../shared/services/formulario-api';
 import { ConfigDetalle } from './formulario-config';
@@ -23,6 +25,7 @@ export class FormularioDetalle implements OnInit {
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly titulo = inject(Title);
   readonly auth = inject(AuthService);
 
   private readonly dlgRevision = viewChild.required<ElementRef<HTMLDialogElement>>('dlgRevision');
@@ -31,6 +34,13 @@ export class FormularioDetalle implements OnInit {
   readonly id = Number(this.route.snapshot.paramMap.get('id'));
   readonly estilosEstado = ESTILOS_ESTADO;
   readonly fechaHora = formatoFechaHora;
+
+  /** Modo documento: la misma pantalla, sin menú, con el encabezado oficial y lista para imprimir o guardar como PDF. */
+  readonly modoPdf = !!this.route.snapshot.data['pdf'];
+  private readonly imprimirAlAbrir = this.route.snapshot.queryParamMap.get('imprimir') === '1';
+  readonly documento = computed(() => DOCUMENTOS[this.config().ruta]);
+  readonly generadoPor = this.auth.usuario()?.nombre ?? '';
+  readonly generadoEn = new Date().toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' });
 
   f = signal<FormularioBase | null>(null);
   cargando = signal(true);
@@ -80,12 +90,23 @@ export class FormularioDetalle implements OnInit {
         next: (r: { data: FormularioBase }) => {
           this.f.set(r.data);
           this.cargando.set(false);
+          if (this.modoPdf && r.data.estado === 'Aprobado') {
+            // El navegador usa el título de la página como nombre del archivo PDF
+            this.titulo.setTitle(`${this.documento()?.codigo ?? 'Formato'} ${r.data.consecutivo}`);
+            if (this.imprimirAlAbrir) {
+              setTimeout(() => window.print(), 600);
+            }
+          }
         },
         error: (e: unknown) => {
           this.error.set(mensajeApi(e, 'No fue posible cargar el registro.'));
           this.cargando.set(false);
         },
       });
+  }
+
+  imprimir(): void {
+    window.print();
   }
 
   // ------------------------------------------------------------------ revisión
