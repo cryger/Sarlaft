@@ -21,6 +21,14 @@ Sistema de Administración del Riesgo de Lavado de Activos y de la Financiación
 | Mi perfil | Datos de la cuenta, cambio de contraseña y actividad propia | `/profile` | — | `usuarios` + `historial` | Cada usuario, solo la suya |
 | Dashboard | Indicadores y actividad reciente | `/dashboard` | — | vista `dashboard` | Admin y Gestor |
 
+Funciones que atraviesan todos los formatos:
+
+| Función | Qué hace |
+|---|---|
+| **PDF** | Los formatos **aprobados** se pueden descargar como PDF con el encabezado oficial (ver «PDF de los formatos aprobados»). |
+| **Notificaciones** | La campana del encabezado avisa al administrador de lo pendiente y al gestor de lo que ya fue revisado. |
+| **Menú de configuración** | La rueda del encabezado da acceso a «Mi perfil y contraseña» y, para el administrador, a Usuarios, Dependencias e Historial. |
+
 Los formatos oficiales están publicados en <https://esehospitalguaviare.gov.co/sarlaft/58>.
 Los usuarios externos reportan desde esa página web; este sistema es para el personal interno y comparte la misma base de datos.
 
@@ -32,6 +40,7 @@ Los usuarios externos reportan desde esa página web; este sistema es para el pe
 | Backend | API REST en PHP 8.1+ (PDO, sin frameworks), autenticación JWT HS256 propia |
 | Base de datos | MySQL / MariaDB (InnoDB, utf8mb4), base `sistemasarlaft` |
 | Desarrollo local | XAMPP (Apache + MariaDB), Angular en `http://localhost:4200` |
+| PDF | Se genera en el navegador con la opción «Guardar como PDF» de la impresión (no requiere librerías en el hosting) |
 
 ## Roles y permisos
 
@@ -45,6 +54,9 @@ Los usuarios externos reportan desde esa página web; este sistema es para el pe
 | Eliminar | ✅ | ❌ |
 | **Enviar** un ROS | ✅ | ✅ |
 | **Consultar, editar o revisar** un ROS | ✅ | ❌ (es confidencial) |
+| Descargar el **PDF** de un formato aprobado | ✅ | ✅ (el ROS, solo el administrador) |
+| Notificaciones: ver lo **pendiente de revisión** | ✅ | ❌ |
+| Notificaciones: ver **sus** formularios aprobados o rechazados | ❌ | ✅ |
 | Usuarios, dependencias (editar) e historial | ✅ | ❌ |
 | Editar **su propio** nombre y correo, y cambiar **su** contraseña | ✅ | ✅ |
 | Cambiar su propio usuario, rol o estado | ❌ | ❌ (solo otro administrador) |
@@ -58,7 +70,7 @@ Las rutas del perfil propio (`/auth/perfil`, `/auth/cambiar-password`) solo act�
 |---|---|
 | **FO-15** Individual | Aplica desde **$ 5.000.000**. Quien paga es un declarante; el formulario muestra su identificación, teléfono, correo y dirección. Exige la autorización de datos personales. |
 | **FO-13** Ausencia | El responsable (declarante) certifica que en el periodo no hubo transacciones. «Hasta» no puede ser anterior a «Desde» ni futuro. |
-| **FO-14** ROS | Se puede enviar como **reporte anónimo** (sin declarante). El gestor solo ve una confirmación con el consecutivo; el detalle es solo del administrador. Los ROS no aparecen en la «actividad reciente» de un gestor. |
+| **FO-14** ROS | Se puede enviar como **reporte anónimo** (sin declarante). El gestor solo ve una confirmación con el consecutivo; el detalle es solo del administrador. Los ROS no aparecen en la «actividad reciente» de un gestor ni en sus notificaciones. |
 | **FO-16** Múltiples | Una fila por transacción del **mismo tercero** (misma identificación). La API calcula el total, el número de transacciones y si **supera el umbral** de **$ 25.000.000**. Bajo el umbral se puede guardar, con aviso. |
 | **FO-09** Vinculación | Persona **natural o jurídica**: al elegir una, el formulario muestra solo sus secciones (la jurídica agrega representante legal y accionistas con más del 5%). La información financiera, las operaciones internacionales, las 6 preguntas PEP, la declaración de origen de fondos y la autorización de datos son obligatorias. Si alguna respuesta PEP es «Sí», el detalle es obligatorio y la lista muestra **«Posible PEP»**. El nombre del tercero, su documento y la alerta PEP los calcula la API. |
 
@@ -72,9 +84,45 @@ Las rutas del perfil propio (`/auth/perfil`, `/auth/cambiar-password`) solo act�
 > El umbral de múltiples debe confirmarse con el Oficial de Cumplimiento: el anexo es de 2016 y existe otro anexo para pagos a proveedores.
 > Al cambiar un umbral hay que editar **los dos archivos** (API y Angular).
 
+## PDF de los formatos aprobados
+
+En el detalle de un formato **aprobado** aparece el botón **«Descargar PDF»**. Lleva a un documento (sin menú ni encabezado de la aplicación)
+con el encabezado oficial (logo, `PLANEACIÓN`, código, versión, título y fecha de aprobación), todas las secciones del formato y un recuadro
+**«Revisión y aprobación»** con quién aprobó, cuándo, su observación y una línea para la firma y el sello del Oficial de Cumplimiento.
+Abre el diálogo de impresión del navegador: se elige **«Guardar como PDF»**. El nombre sugerido del archivo es `CÓDIGO CONSECUTIVO` (por ejemplo `E-PL-FO-09 VT-0001`).
+
+| Tema | Detalle |
+|---|---|
+| Rutas | `/documento/transacciones/:id`, `/documento/ausencias/:id`, `/documento/reportes-ros/:id` (solo admin), `/documento/transacciones-multiples/:id`, `/documento/vinculacion-terceros/:id`. Están en `app.routes.ts` **fuera** del bloque del `Layout`, con `data: { pdf: true }`. |
+| Componente | Es el mismo detalle genérico (`formulario-detalle`) en «modo documento»: reutiliza las secciones y tablas de cada formato, así que lo que se ve en pantalla y en el PDF sale de una sola configuración. |
+| Encabezado oficial | Se define en `src/app/core/documentos.ts` (código, versión, título y `fechaAprobacion`). **Completa la fecha de aprobación de cada formato**: si falta, el PDF no muestra esa fila y no inventa una fecha. |
+| Impresión | Estilos `@page` y `@media print` al final de `src/styles.css`. El encabezado y el pie oficiales **se repiten en cada hoja**; las secciones no se parten a la mitad. |
+| Solo aprobados | Un formato pendiente o rechazado muestra un aviso en lugar del documento. |
+| Misma pestaña | El documento se abre en la **misma pestaña**: la sesión vive en `sessionStorage`, que el navegador no copia a pestañas nuevas. |
+
+Limitaciones actuales: el PDF **no se guarda en el servidor** (se genera en el equipo de quien lo pide), **no lleva firma digital** (trae la línea para firma y sello
+físicos) y **no deja registro en el historial** de quién lo descargó.
+
+## Notificaciones y menú de configuración
+
+**Campana** (`GET /notificaciones`):
+
+| Rol | Qué muestra | El número |
+|---|---|---|
+| Administrador | Los formularios **pendientes de revisión** de todos los módulos (incluido el ROS), los más recientes primero. Marca con **«Posible PEP»** las vinculaciones con alerta. | El total de pendientes; baja a medida que los revisa. |
+| Gestor | **Sus** formularios que ya fueron aprobados o rechazados en los últimos 30 días. El rechazado muestra el **motivo**; el aprobado avisa que ya puede descargar el PDF. El ROS nunca aparece. | Lo que aún no ha visto; se apaga al abrir la campana. |
+
+- «Sus» formularios se deducen del historial (quien registró la **Creación**).
+- Se actualiza al abrir la campana, al navegar entre pantallas (máximo cada 15 s) y cada 2 minutos.
+- «Lo que ya vi» se guarda **en el navegador** (`localStorage`, clave `sarlaft_notif_vistas_<usuario>`): si el gestor entra desde otro computador, verá las notificaciones como nuevas.
+- «Hace cuánto» lo calcula la **base de datos** (`TIMESTAMPDIFF`), así no depende de la zona horaria del navegador ni del hosting.
+
+**Rueda de configuración:** abre un menú con el nombre y el rol de quien tiene la sesión, «Mi perfil y contraseña» y «Cerrar sesión». El administrador ve además Usuarios, Dependencias e Historial de auditoría.
+Ambos paneles se cierran con `Escape`, con un clic fuera o al elegir una opción, y solo uno puede estar abierto a la vez.
+
 ## Imagen corporativa
 
-El logo del hospital está en `public/logo-hsjg.png` (PNG con fondo transparente) y se usa en la pantalla de inicio de sesión,
+El logo del hospital está en `public/logo-hsjg.png` (PNG con fondo transparente). Se usa en la pantalla de inicio de sesión y en el encabezado del PDF,
 siempre sobre fondo blanco para que se lea. La paleta del login y de la aplicación es gris oscuro, naranja de acento y grises azulados.
 Para mostrar el logo en la pestaña del navegador, en `src/index.html`: `<link rel="icon" type="image/png" href="logo-hsjg.png">`.
 
@@ -84,11 +132,11 @@ Para mostrar el logo en la pestaña del navegador, en `src/index.html`: `<link r
 sarlatf/                                  ← Angular
 ├── .postcssrc.json                       ← activa Tailwind (no borrar)
 ├── public/
-│   └── logo-hsjg.png                     ← logo del hospital (login)
+│   └── logo-hsjg.png                     ← logo del hospital (login y PDF)
 ├── src/
-│   ├── styles.css                        ← Tailwind + clases .campo, .campo-area, .etiqueta, .seccion-titulo
+│   ├── styles.css                        ← Tailwind + clases .campo, .campo-area, .etiqueta, .seccion-titulo + estilos de impresión
 │   └── app/
-│       ├── app.routes.ts                 ← todas las rutas y guardias
+│       ├── app.routes.ts                 ← todas las rutas y guardias (incluidas las de /documento/...)
 │       ├── core/                         ← sesión, guardias, interceptor, utilidades
 │       │   ├── api.config.ts             ← URL de la API (API_URL)
 │       │   ├── auth.service.ts · auth.guard.ts · auth.interceptor.ts
@@ -97,14 +145,15 @@ sarlatf/                                  ← Angular
 │       │   ├── constantes.ts             ← entidad y tipos de documento
 │       │   ├── autorizacion.ts           ← texto de autorización de datos personales
 │       │   ├── buscador-declarantes.ts   ← lógica del selector de declarantes
-│       │   └── campo-def.ts              ← definición de campos: crea controles, validaciones y textos
+│       │   ├── campo-def.ts              ← definición de campos: crea controles, validaciones y textos
+│       │   └── documentos.ts             ← encabezado oficial de cada formato para el PDF (código, versión, fecha)
 │       ├── shared/
-│       │   ├── components/               ← layout, sidebar, header, footer, stat-card, campo, campos-dinamicos
-│       │   └── services/                 ← un servicio por recurso de la API (y perfil.ts)
+│       │   ├── components/               ← layout, sidebar, header (campana y rueda), footer, stat-card, campo, campos-dinamicos
+│       │   └── services/                 ← un servicio por recurso de la API (y perfil.ts, notificaciones.ts)
 │       └── bussiness/
-│           ├── formularios/              ← lista y detalle GENÉRICOS de los formatos
-│           ├── transacciones/            ← FO-15 (lista, formulario, detalle)
-│           ├── ausencias/                ← FO-13
+│           ├── formularios/              ← lista y detalle GENÉRICOS de los formatos (el detalle también hace de «documento» PDF)
+│           ├── transacciones/            ← FO-15 (lista, formulario, detalle genérico)
+│           ├── ausencias/                ← FO-13 (ausencias.ts, ausencias-detalle.ts, ausencias-form.ts)
 │           ├── reportes-ros/             ← FO-14
 │           ├── multiples/                ← FO-16
 │           ├── vinculacion/              ← FO-09 (campos, lista, detalle, formulario)
@@ -121,7 +170,7 @@ sarlaft-api/                              ← PHP
 │   ├── Validator.php                     ← validación por tipo
 │   ├── Recurso.php                       ← CRUD genérico dirigido por configuración
 │   ├── recursos.php                      ← definición de cada recurso, permisos y reglas
-│   └── Controladores.php                 ← sesión (login, perfil, contraseña) y dashboard
+│   └── Controladores.php                 ← sesión (login, perfil, contraseña), dashboard y notificaciones
 └── tools/generar_hash.php                ← genera un hash de contraseña
 ```
 
@@ -178,7 +227,7 @@ Abre <http://localhost:4200>. La URL de la API está en `src/app/core/api.config
 | `reporte_ros` | FO-14. `id_declarante` puede ser vacío (reporte anónimo). |
 | `transacciones_multiples` y `transacciones_multiples_detalle` | FO-16 (cabecera y una fila por transacción). |
 | `vinculacion_terceros` | FO-09. La cabecera va en columnas y todas las secciones del formato en `datos` (JSON). |
-| `historial` | Auditoría: módulo, registro, acción, usuario, fecha, IP, detalle. |
+| `historial` | Auditoría: módulo, registro, acción, usuario, fecha, IP, detalle. También permite saber quién creó cada formulario (para las notificaciones del gestor). |
 | vista `dashboard` | Totales para las tarjetas. |
 
 Todos los formularios comparten estas columnas: `consecutivo`, `estado` (`Pendiente`, `Aprobado`, `Rechazado`),
@@ -318,6 +367,7 @@ CREATE TABLE IF NOT EXISTS vinculacion_terceros (
 
 Las migraciones solo **agregan** columnas o tablas: no borran datos ni rompen los formularios de la página web.
 Si el formulario web inserta en estas tablas, debe llenar también las columnas nuevas.
+El PDF y las notificaciones **no necesitan cambios en la base de datos**.
 
 ## API REST
 
@@ -330,6 +380,7 @@ exigen `Authorization: Bearer <token>`.
 | Sesión | `POST /auth/login` · `GET /auth/me` |
 | Perfil propio | `GET /auth/perfil` · `PUT /auth/perfil` (nombre y correo) · `POST /auth/cambiar-password` (`{actual, nueva}`) |
 | Dashboard | `GET /dashboard` |
+| Notificaciones | `GET /notificaciones` (administrador: pendientes de revisión; gestor: sus formularios ya revisados) |
 | Declarantes | `GET, POST /declarantes` · `GET, PUT, DELETE /declarantes/{id}` |
 | Dependencias | `GET, POST /dependencias` · `GET, PUT, DELETE /dependencias/{id}` |
 | Usuarios (solo Admin) | `GET, POST /usuarios` · `GET, PUT, DELETE /usuarios/{id}` |
@@ -355,6 +406,9 @@ como `persona.nombres`, `accionistas.0.porcentaje`, `pep.detalle`, etc. El nombr
 
 **Cambio de contraseña:** una contraseña actual incorrecta responde **422** (no 401, que cerraría la sesión). La contraseña nunca se guarda en el historial.
 
+**Notificaciones:** devuelve `{ rol, pendientes_total, items[] }`. Cada ítem trae `tipo`, `ruta`, `id`, `consecutivo`, `fecha` y `segundos` (hace cuánto, según el reloj de la base de datos);
+el administrador recibe además `alerta_pep` y el gestor `estado` y `observacion`. Muestra como máximo 8 ítems.
+
 ## Cómo agregar un formato nuevo
 
 1. **Base de datos:** crea la tabla con las columnas comunes de los formularios.
@@ -367,6 +421,10 @@ como `persona.nombres`, `accionistas.0.porcentaje`, `pep.detalle`, etc. El nombr
    Para formatos largos, define los campos como lista (`CampoDef`, ver `vinculacion-campos.ts`) y usa `construirGrupo()` y `<app-campos-dinamicos>`:
    una sola definición crea los controles, las validaciones, el dibujo y el detalle.
 6. **Rutas y menú:** `nuevo` va **antes** de `:id` en `app.routes.ts`; agrega el ítem en `sidebar.ts`.
+7. **PDF:** agrega el formato en `src/app/core/documentos.ts` (código, versión, título, fecha de aprobación) y una ruta `documento/<modulo>/:id`
+   con `data: { pdf: true }`, fuera del `Layout`, que cargue el mismo componente de detalle.
+8. **Notificaciones:** agrega el módulo a las consultas de `NotificacionesController` en `Controladores.php` (pendientes del administrador y revisados del gestor).
+   Si el formato es confidencial, déjalo fuera de la consulta del gestor, como el ROS.
 
 ## Convenciones del código
 
@@ -375,6 +433,7 @@ como `persona.nombres`, `accionistas.0.porcentaje`, `pep.detalle`, etc. El nombr
 - Los mensajes de éxito pasan por `history.state` al navegar y se limpian para que no reaparezcan al recargar.
 - Los errores de la API se muestran junto al campo (`control.setErrors({ servidor: texto })`).
 - Los campos que dependen de otra respuesta (por ejemplo «¿Cuál?») se definen con `visibleSi`; solo son obligatorios mientras se ven.
+- Lo que no debe salir en el PDF lleva la clase `no-imprimir`; lo que no debe partirse entre hojas, `evitar-corte`.
 - Los archivos de un componente van **planos** dentro de su carpeta. Si usas `ng generate`, agrega `--flat`:
 
 ```bash
@@ -390,6 +449,7 @@ ng g c bussiness/carpeta/nombre --flat --skip-tests --style=none
 - Cambiar la contraseña **no cierra las demás sesiones abiertas**: siguen válidas hasta que venza su token (8 horas por defecto).
 - Cada creación, cambio, eliminación, revisión, cambio de perfil o de contraseña e inicio de sesión queda en `historial` con usuario e IP.
 - Los ROS son confidenciales: ver la tabla de permisos. El FO-09 guarda datos financieros y de PEP: conviene definir quién puede verlos.
+- El PDF de un formato lo genera el navegador con los datos que el usuario ya puede ver: no abre ningún acceso nuevo, pero tampoco queda registro de la descarga.
 
 ## Despliegue en el hosting
 
@@ -397,7 +457,7 @@ ng g c bussiness/carpeta/nombre --flat --skip-tests --style=none
 2. Sube `sarlaft-api` a `public_html/sarlaft-api`, con el `.htaccess` oculto, y edita `config.php` (usuario y clave de la base,
    `jwt.secret`, y en `cors.origenes` el dominio real).
 3. Cambia `API_URL` en `src/app/core/api.config.ts` por `https://TU-DOMINIO.com/sarlaft-api` **antes** de compilar.
-4. Para que las rutas de Angular funcionen al recargar, agrega este `.htaccess` junto al `index.html`:
+4. Para que las rutas de Angular funcionen al recargar (incluidas las de `/documento/...`), agrega este `.htaccess` junto al `index.html`:
 
 ```apache
 RewriteEngine On
@@ -420,18 +480,27 @@ RewriteRule . /index.html [L]
 | `[x: string]: any;` dentro de una clase | El editor «arregló» un error ocultándolo | Borrar esa línea y corregir el error real. |
 | Un gestor en «Reportes ROS» cae en el dashboard | El menú o el guardia no están actualizados | `sidebar.html` debe usar `destino(item)` y la ruta usar `rosListaGuard`. |
 | «Mi perfil» dice «Recurso no encontrado» | Las rutas `perfil` quedaron **dentro** del bloque de `me` en `AuthController::manejar` | Deben ser bloques `if` separados, al mismo nivel, antes del `throw`. |
+| `Could not resolve "./bussiness/.../xxx-detalle"` | El nombre del archivo en la ruta no coincide con el de tu proyecto (por ejemplo `ausencias-detalle`, en plural) | Copiar el `loadComponent` de la ruta normal del mismo módulo, que ya funciona. |
+| No aparece el botón «Descargar PDF» | El formato no está **aprobado**, o su ruta no está en `DOCUMENTOS` (`core/documentos.ts`) | Aprobarlo; revisar que la clave coincida con la ruta del módulo (por ejemplo `/vinculacion-terceros`). |
+| El PDF pide iniciar sesión | El documento se abrió en una pestaña nueva (`sessionStorage` no se copia) | Abrirlo desde el botón «Descargar PDF», en la misma pestaña. |
+| El PDF no muestra la fecha de aprobación | Falta `fechaAprobacion` del formato en `core/documentos.ts` | Agregar la fecha oficial del formato (`dd/mm/aaaa`). |
+| El PDF sale con menú o fondos grises | Faltan los estilos de impresión al final de `styles.css` | Agregar el bloque `@page` y `@media print`. |
+| La campana no muestra número | No hay nada pendiente (administrador) o nada nuevo (gestor), o falta la ruta `notificaciones` en `index.php` | Probar `GET /notificaciones` con el token; si da 404, agregar el bloque en `index.php`. |
+| «hace 5 h» en algo recién creado | La API es una versión anterior (calculaba la hora en el navegador) | Actualizar `NotificacionesController`: debe devolver `segundos`. |
 | Tras renombrar archivos no compila | `ng serve` quedó con nombres viejos | `Ctrl+C`, volver a ejecutar `ng serve` y `Ctrl+Shift+R`. |
-| El logo no aparece en el login | El archivo no está en `public/` o tiene otro nombre | Debe llamarse `public/logo-hsjg.png`; probar `http://localhost:4200/logo-hsjg.png`. |
+| El logo no aparece en el login ni en el PDF | El archivo no está en `public/` o tiene otro nombre | Debe llamarse `public/logo-hsjg.png`; probar `http://localhost:4200/logo-hsjg.png`. |
 | Error de CORS | El origen de Angular no está en `config.php` | Agregarlo a `cors.origenes`. |
 
 ## Pendientes
 
-- **Anexos de evidencia:** subir y servir archivos de forma segura para el ROS (FO-14) y el escaneado firmado del FO-09
-  (la columna `archivo_pdf` ya existe en ambas tablas).
-- **Rol de Oficial de Cumplimiento:** que los ROS y los datos PEP/financieros del FO-09 sean visibles solo para ese rol y no para todo administrador técnico.
+- **Fechas de aprobación de los formatos:** completar `fechaAprobacion` (y confirmar `version`) de FO-13, 14, 15 y 16 en `core/documentos.ts`; hoy solo está la del FO-09.
+- **Guardar el PDF en el servidor** (columna `archivo_pdf`) y **registrar en el historial** quién lo descargó. Es la misma pieza que los anexos.
+- **Anexos de evidencia:** subir y servir archivos de forma segura para el ROS (FO-14) y el escaneado firmado del FO-09.
+- **Rol de Oficial de Cumplimiento:** que los ROS y los datos PEP/financieros del FO-09 —y la aprobación que aparece en el PDF— sean de ese rol y no de cualquier administrador.
 - **Parte web pública:** actualizar el formulario de la página del hospital para que llene las columnas nuevas y cumpla las mismas reglas.
-- **Dashboard:** incluir las transacciones múltiples y las vinculaciones en las tarjetas y en la actividad reciente.
-- **PDF:** generar o descargar los formatos aprobados.
+- **Dashboard:** incluir las transacciones múltiples y las vinculaciones en las tarjetas y en la actividad reciente; tarjetas clicables que lleven a la lista filtrada.
+- **Buscador del encabezado:** el cuadro «Buscar» todavía no hace nada; conectarlo a la búsqueda por consecutivo, nombre o documento.
+- **Notificaciones:** guardar en el servidor lo que cada gestor ya vio (hoy se recuerda por navegador).
 - **Paginación en Declarantes y Dependencias** (hoy cargan la lista completa).
 - **Seguridad:** limitar los intentos de inicio de sesión y cerrar las demás sesiones al cambiar la contraseña.
 - **Confirmar con el Oficial de Cumplimiento** el umbral de $ 25.000.000 de las transacciones múltiples.
