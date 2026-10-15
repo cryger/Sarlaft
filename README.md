@@ -3,7 +3,7 @@
 Sistema interno de la **E.S.E. Hospital San José del Guaviare** para gestionar los formatos del
 Sistema de Administración del Riesgo de Lavado de Activos y de la Financiación del Terrorismo (SARLAFT).
 
-> Última actualización: 14/10/2026
+> Última actualización: 15/10/2026
 
 ## Qué incluye
 
@@ -13,10 +13,12 @@ Sistema de Administración del Riesgo de Lavado de Activos y de la Financiación
 | Ausencias | **E-PL-FO-13** Ausencia de transacciones en efectivo | `/ausencias` | `AT-` | `ausencia_transacciones` | Admin y Gestor |
 | Reportes ROS | **E-PL-FO-14** Operación intentada, inusual o sospechosa | `/reportes-ros` | `ROS-` | `reporte_ros` | Gestor **envía**; solo Admin consulta |
 | Transacciones múltiples | **E-PL-FO-16** Transacciones múltiples | `/transacciones-multiples` | `TM-` | `transacciones_multiples` + `_detalle` | Admin y Gestor |
+| Vinculación de terceros | **E-PL-FO-09** Vinculación y actualización de terceros | `/vinculacion-terceros` | `VT-` | `vinculacion_terceros` | Admin y Gestor |
 | Declarantes | Personas que pagan, reportan o responden | `/declarantes` | — | `declarantes` | Admin y Gestor |
 | Dependencias | Áreas del hospital | `/dependencias` | — | `dependencias` | Admin (edita) |
 | Usuarios | Acceso al sistema | `/usuarios` | — | `usuarios` | Solo Admin |
 | Historial de auditoría | Quién hizo qué y cuándo (solo lectura) | `/historial` | — | `historial` | Solo Admin |
+| Mi perfil | Datos de la cuenta, cambio de contraseña y actividad propia | `/profile` | — | `usuarios` + `historial` | Cada usuario, solo la suya |
 | Dashboard | Indicadores y actividad reciente | `/dashboard` | — | vista `dashboard` | Admin y Gestor |
 
 Los formatos oficiales están publicados en <https://esehospitalguaviare.gov.co/sarlaft/58>.
@@ -35,7 +37,7 @@ Los usuarios externos reportan desde esa página web; este sistema es para el pe
 
 | Acción | Administrador | Gestor |
 |---|:-:|:-:|
-| Ver listas y detalles de transacciones, ausencias y múltiples | ✅ | ✅ |
+| Ver listas y detalles de transacciones, ausencias, múltiples y vinculaciones | ✅ | ✅ |
 | Crear formularios | ✅ | ✅ |
 | Editar formularios **pendientes** | ✅ | ✅ |
 | Editar formularios aprobados o rechazados | ✅ | ❌ |
@@ -44,8 +46,11 @@ Los usuarios externos reportan desde esa página web; este sistema es para el pe
 | **Enviar** un ROS | ✅ | ✅ |
 | **Consultar, editar o revisar** un ROS | ✅ | ❌ (es confidencial) |
 | Usuarios, dependencias (editar) e historial | ✅ | ❌ |
+| Editar **su propio** nombre y correo, y cambiar **su** contraseña | ✅ | ✅ |
+| Cambiar su propio usuario, rol o estado | ❌ | ❌ (solo otro administrador) |
 
 Los permisos se editan en `sarlaft-api/src/recursos.php` (listas `permisos` de cada recurso).
+Las rutas del perfil propio (`/auth/perfil`, `/auth/cambiar-password`) solo actúan sobre la cuenta de quien tiene la sesión.
 
 ## Reglas de negocio de cada formato
 
@@ -55,6 +60,7 @@ Los permisos se editan en `sarlaft-api/src/recursos.php` (listas `permisos` de c
 | **FO-13** Ausencia | El responsable (declarante) certifica que en el periodo no hubo transacciones. «Hasta» no puede ser anterior a «Desde» ni futuro. |
 | **FO-14** ROS | Se puede enviar como **reporte anónimo** (sin declarante). El gestor solo ve una confirmación con el consecutivo; el detalle es solo del administrador. Los ROS no aparecen en la «actividad reciente» de un gestor. |
 | **FO-16** Múltiples | Una fila por transacción del **mismo tercero** (misma identificación). La API calcula el total, el número de transacciones y si **supera el umbral** de **$ 25.000.000**. Bajo el umbral se puede guardar, con aviso. |
+| **FO-09** Vinculación | Persona **natural o jurídica**: al elegir una, el formulario muestra solo sus secciones (la jurídica agrega representante legal y accionistas con más del 5%). La información financiera, las operaciones internacionales, las 6 preguntas PEP, la declaración de origen de fondos y la autorización de datos son obligatorias. Si alguna respuesta PEP es «Sí», el detalle es obligatorio y la lista muestra **«Posible PEP»**. El nombre del tercero, su documento y la alerta PEP los calcula la API. |
 
 ### Umbrales (dónde cambiarlos)
 
@@ -66,11 +72,19 @@ Los permisos se editan en `sarlaft-api/src/recursos.php` (listas `permisos` de c
 > El umbral de múltiples debe confirmarse con el Oficial de Cumplimiento: el anexo es de 2016 y existe otro anexo para pagos a proveedores.
 > Al cambiar un umbral hay que editar **los dos archivos** (API y Angular).
 
+## Imagen corporativa
+
+El logo del hospital está en `public/logo-hsjg.png` (PNG con fondo transparente) y se usa en la pantalla de inicio de sesión,
+siempre sobre fondo blanco para que se lea. La paleta del login y de la aplicación es gris oscuro, naranja de acento y grises azulados.
+Para mostrar el logo en la pestaña del navegador, en `src/index.html`: `<link rel="icon" type="image/png" href="logo-hsjg.png">`.
+
 ## Estructura del proyecto
 
 ```
 sarlatf/                                  ← Angular
 ├── .postcssrc.json                       ← activa Tailwind (no borrar)
+├── public/
+│   └── logo-hsjg.png                     ← logo del hospital (login)
 ├── src/
 │   ├── styles.css                        ← Tailwind + clases .campo, .campo-area, .etiqueta, .seccion-titulo
 │   └── app/
@@ -82,16 +96,18 @@ sarlatf/                                  ← Angular
 │       │   ├── formato.ts                ← pesos, fechas, periodos, colores de estado
 │       │   ├── constantes.ts             ← entidad y tipos de documento
 │       │   ├── autorizacion.ts           ← texto de autorización de datos personales
-│       │   └── buscador-declarantes.ts   ← lógica del selector de declarantes
+│       │   ├── buscador-declarantes.ts   ← lógica del selector de declarantes
+│       │   └── campo-def.ts              ← definición de campos: crea controles, validaciones y textos
 │       ├── shared/
-│       │   ├── components/               ← layout, sidebar, header, footer, stat-card, campo
-│       │   └── services/                 ← un servicio por recurso de la API
+│       │   ├── components/               ← layout, sidebar, header, footer, stat-card, campo, campos-dinamicos
+│       │   └── services/                 ← un servicio por recurso de la API (y perfil.ts)
 │       └── bussiness/
 │           ├── formularios/              ← lista y detalle GENÉRICOS de los formatos
 │           ├── transacciones/            ← FO-15 (lista, formulario, detalle)
 │           ├── ausencias/                ← FO-13
 │           ├── reportes-ros/             ← FO-14
 │           ├── multiples/                ← FO-16
+│           ├── vinculacion/              ← FO-09 (campos, lista, detalle, formulario)
 │           ├── declarantes/ · dependencias/ · usuarios/ · historial/
 │           └── login/ · dashboard/ · profile/ · proximamente/
 
@@ -105,7 +121,7 @@ sarlaft-api/                              ← PHP
 │   ├── Validator.php                     ← validación por tipo
 │   ├── Recurso.php                       ← CRUD genérico dirigido por configuración
 │   ├── recursos.php                      ← definición de cada recurso, permisos y reglas
-│   └── Controladores.php                 ← login y dashboard
+│   └── Controladores.php                 ← sesión (login, perfil, contraseña) y dashboard
 └── tools/generar_hash.php                ← genera un hash de contraseña
 ```
 
@@ -161,6 +177,7 @@ Abre <http://localhost:4200>. La URL de la API está en `src/app/core/api.config
 | `ausencia_transacciones` | FO-13. |
 | `reporte_ros` | FO-14. `id_declarante` puede ser vacío (reporte anónimo). |
 | `transacciones_multiples` y `transacciones_multiples_detalle` | FO-16 (cabecera y una fila por transacción). |
+| `vinculacion_terceros` | FO-09. La cabecera va en columnas y todas las secciones del formato en `datos` (JSON). |
 | `historial` | Auditoría: módulo, registro, acción, usuario, fecha, IP, detalle. |
 | vista `dashboard` | Totales para las tarjetas. |
 
@@ -264,6 +281,41 @@ CREATE TABLE IF NOT EXISTS transacciones_multiples_detalle (
 ```
 </details>
 
+<details>
+<summary>4) FO-09: una tabla nueva</summary>
+
+```sql
+CREATE TABLE IF NOT EXISTS vinculacion_terceros (
+  id_vinculacion         INT(11)      NOT NULL AUTO_INCREMENT,
+  consecutivo            VARCHAR(20)  NOT NULL,
+  tipo_solicitud         VARCHAR(30)  NOT NULL,
+  clase_vinculacion      VARCHAR(20)  NOT NULL,
+  tipo_persona           VARCHAR(10)  NOT NULL,
+  fecha_diligenciamiento DATE         NOT NULL,
+  tercero_nombre         VARCHAR(250) DEFAULT NULL,
+  tercero_tipo_id        VARCHAR(30)  DEFAULT NULL,
+  tercero_numero_id      VARCHAR(30)  DEFAULT NULL,
+  alerta_pep             CHAR(2)      DEFAULT NULL,
+  datos                  LONGTEXT     NOT NULL,
+  archivo_pdf            VARCHAR(255) DEFAULT NULL,
+  fecha_registro         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ip                     VARCHAR(50)  DEFAULT NULL,
+  estado                 ENUM('Pendiente','Aprobado','Rechazado') NOT NULL DEFAULT 'Pendiente',
+  observacion_revision   TEXT         DEFAULT NULL,
+  usuario_revision       INT(11)      DEFAULT NULL,
+  fecha_revision         DATETIME     DEFAULT NULL,
+  fecha_aprobacion       DATETIME     DEFAULT NULL,
+  PRIMARY KEY (id_vinculacion),
+  UNIQUE KEY uq_vt_consecutivo (consecutivo),
+  KEY idx_vt_revisor (usuario_revision),
+  KEY idx_vt_estado (estado),
+  KEY idx_vt_tercero (tercero_numero_id),
+  CONSTRAINT fk_vt_revisor FOREIGN KEY (usuario_revision) REFERENCES usuarios (id_usuario)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+</details>
+
 Las migraciones solo **agregan** columnas o tablas: no borran datos ni rompen los formularios de la página web.
 Si el formulario web inserta en estas tablas, debe llenar también las columnas nuevas.
 
@@ -276,6 +328,7 @@ exigen `Authorization: Bearer <token>`.
 | Recurso | Rutas |
 |---|---|
 | Sesión | `POST /auth/login` · `GET /auth/me` |
+| Perfil propio | `GET /auth/perfil` · `PUT /auth/perfil` (nombre y correo) · `POST /auth/cambiar-password` (`{actual, nueva}`) |
 | Dashboard | `GET /dashboard` |
 | Declarantes | `GET, POST /declarantes` · `GET, PUT, DELETE /declarantes/{id}` |
 | Dependencias | `GET, POST /dependencias` · `GET, PUT, DELETE /dependencias/{id}` |
@@ -284,25 +337,35 @@ exigen `Authorization: Bearer <token>`.
 | FO-13 | `/ausencias` y `PATCH /ausencias/{id}/revision` |
 | FO-14 | `/reportes-ros` y `PATCH /reportes-ros/{id}/revision` (el gestor solo puede `POST`) |
 | FO-16 | `/transacciones-multiples` y `PATCH /transacciones-multiples/{id}/revision` |
+| FO-09 | `/vinculacion-terceros` y `PATCH /vinculacion-terceros/{id}/revision` |
 | Historial (solo Admin) | `GET /historial` · `GET /historial/{id}` |
 
-Los cuatro formatos tienen las mismas operaciones: `GET` lista, `POST` crea, `GET/PUT/DELETE` por `{id}`, y `PATCH .../revision`
+Los cinco formatos tienen las mismas operaciones: `GET` lista, `POST` crea, `GET/PUT/DELETE` por `{id}`, y `PATCH .../revision`
 con `{ "estado": "Aprobado|Rechazado|Pendiente", "observacion": "..." }` (rechazar exige el motivo).
 
 **Filtros de las listas:** `?q=texto` · `?estado=Pendiente` · `?desde=2026-10-01&hasta=2026-10-31` · `?limit=50&offset=0`
-(en el historial además `?modulo=` `?accion=` `?usuario=`).
+(en el historial además `?modulo=` `?accion=` `?usuario=`; en FO-09 además `?clase=Proveedor` `?persona=Jurídica` `?pep=SI`).
 
 **Transacciones múltiples:** las filas viajan en la lista `detalles` del mismo registro. Al editar, si se envía `detalles` se reemplazan todas
 y se recalculan los totales. Los totales (`total_acumulado`, `num_transacciones`, `supera_umbral`) los calcula siempre el servidor.
+
+**Vinculación de terceros:** las secciones del formato (persona, representante, tributaria, financiera, accionistas, internacional, PEP,
+origen de fondos, autorización y firma) viajan en el bloque `formulario`. La API las valida campo por campo y devuelve los errores
+como `persona.nombres`, `accionistas.0.porcentaje`, `pep.detalle`, etc. El nombre del tercero, su documento y `alerta_pep` los calcula el servidor.
+
+**Cambio de contraseña:** una contraseña actual incorrecta responde **422** (no 401, que cerraría la sesión). La contraseña nunca se guarda en el historial.
 
 ## Cómo agregar un formato nuevo
 
 1. **Base de datos:** crea la tabla con las columnas comunes de los formularios.
 2. **API:** en `recursos.php` define el recurso con `$formulario(...)` (campos, reglas, prefijo del consecutivo) y agrégalo al `return`.
+   Si el formato tiene filas o muchas secciones, usa la clave `hijos` (ver FO-16 y FO-09).
 3. **Servicio:** `shared/services/nombre.ts` con `class NombreService extends FormularioApi<Tipo, Entrada>`.
 4. **Lista y detalle:** dos componentes pequeños que solo declaran la configuración (`ConfigLista`, `ConfigDetalle`) y usan
    `<app-formulario-lista>` y `<app-formulario-detalle>`.
 5. **Formulario:** componente con `FormBuilder`; usa `<app-campo>` y las clases `campo`, `campo-area`, `etiqueta`, `seccion-titulo`.
+   Para formatos largos, define los campos como lista (`CampoDef`, ver `vinculacion-campos.ts`) y usa `construirGrupo()` y `<app-campos-dinamicos>`:
+   una sola definición crea los controles, las validaciones, el dibujo y el detalle.
 6. **Rutas y menú:** `nuevo` va **antes** de `:id` en `app.routes.ts`; agrega el ítem en `sidebar.ts`.
 
 ## Convenciones del código
@@ -311,6 +374,7 @@ y se recalculan los totales. Los totales (`total_acumulado`, `num_transacciones`
 - Los modales usan el elemento nativo `<dialog>` (cierra con Escape y atrapa el foco).
 - Los mensajes de éxito pasan por `history.state` al navegar y se limpian para que no reaparezcan al recargar.
 - Los errores de la API se muestran junto al campo (`control.setErrors({ servidor: texto })`).
+- Los campos que dependen de otra respuesta (por ejemplo «¿Cuál?») se definen con `visibleSi`; solo son obligatorios mientras se ven.
 - Los archivos de un componente van **planos** dentro de su carpeta. Si usas `ng generate`, agrega `--flat`:
 
 ```bash
@@ -323,8 +387,9 @@ ng g c bussiness/carpeta/nombre --flat --skip-tests --style=none
 - Usa **HTTPS** en el hosting y `'debug' => false` en producción.
 - El `jwt.secret` debe tener al menos 40 caracteres; si lo cambias, se cierran todas las sesiones.
 - Las contraseñas se guardan con hash (bcrypt). La sesión del navegador vive en `sessionStorage` y se cierra al cerrar la pestaña.
-- Cada creación, cambio, eliminación, revisión e inicio de sesión queda en `historial` con usuario e IP.
-- Los ROS son confidenciales: ver la tabla de permisos.
+- Cambiar la contraseña **no cierra las demás sesiones abiertas**: siguen válidas hasta que venza su token (8 horas por defecto).
+- Cada creación, cambio, eliminación, revisión, cambio de perfil o de contraseña e inicio de sesión queda en `historial` con usuario e IP.
+- Los ROS son confidenciales: ver la tabla de permisos. El FO-09 guarda datos financieros y de PEP: conviene definir quién puede verlos.
 
 ## Despliegue en el hosting
 
@@ -347,17 +412,26 @@ RewriteRule . /index.html [L]
 
 | Síntoma | Causa probable | Qué hacer |
 |---|---|---|
-| Al guardar sale **500** | Falta una columna o hay un error de PHP | `'debug' => true` en `config.php`, repetir y leer el campo `debug` de la respuesta (pestaña Network → Response). Volver a `false`. |
+| Al guardar sale **500** | Falta una columna o tabla, o hay un error de PHP | `'debug' => true` en `config.php`, repetir y leer el campo `debug` de la respuesta (pestaña Network → Response). Volver a `false`. |
+| `/vinculacion-terceros` da 500 | Falta crear la tabla `vinculacion_terceros` | Ejecutar la migración 4. |
 | `Undefined constant "UMBRAL_EFECTIVO"` (o `UMBRAL_MULTIPLES`) | Falta la constante al inicio de `recursos.php` | Definirla antes de `function recursos()`. |
 | Los campos salen sin borde ni estilo | Falta el bloque `@layer components` en `styles.css` o `.postcssrc.json` | Ver la sección de estructura. |
 | `Property 'fr' ...` en `formulario-detalle.html` | El bloque de la tabla quedó fuera de `@else if (f(); as fr)` | Debe ir entre las secciones y «Revisión». |
-| Un gestor «Reportes ROS» cae en el dashboard | El menú o el guardia no están actualizados | `sidebar.html` debe usar `destino(item)` y la ruta usar `rosListaGuard`. |
+| `[x: string]: any;` dentro de una clase | El editor «arregló» un error ocultándolo | Borrar esa línea y corregir el error real. |
+| Un gestor en «Reportes ROS» cae en el dashboard | El menú o el guardia no están actualizados | `sidebar.html` debe usar `destino(item)` y la ruta usar `rosListaGuard`. |
+| «Mi perfil» dice «Recurso no encontrado» | Las rutas `perfil` quedaron **dentro** del bloque de `me` en `AuthController::manejar` | Deben ser bloques `if` separados, al mismo nivel, antes del `throw`. |
 | Tras renombrar archivos no compila | `ng serve` quedó con nombres viejos | `Ctrl+C`, volver a ejecutar `ng serve` y `Ctrl+Shift+R`. |
+| El logo no aparece en el login | El archivo no está en `public/` o tiene otro nombre | Debe llamarse `public/logo-hsjg.png`; probar `http://localhost:4200/logo-hsjg.png`. |
 | Error de CORS | El origen de Angular no está en `config.php` | Agregarlo a `cors.origenes`. |
 
 ## Pendientes
 
-- **Anexos de evidencia del ROS (FO-14):** subir y servir archivos de forma segura (la columna `archivo_pdf` ya existe).
-- **Dashboard:** incluir las transacciones múltiples en las tarjetas y en la actividad reciente.
+- **Anexos de evidencia:** subir y servir archivos de forma segura para el ROS (FO-14) y el escaneado firmado del FO-09
+  (la columna `archivo_pdf` ya existe en ambas tablas).
+- **Rol de Oficial de Cumplimiento:** que los ROS y los datos PEP/financieros del FO-09 sean visibles solo para ese rol y no para todo administrador técnico.
+- **Parte web pública:** actualizar el formulario de la página del hospital para que llene las columnas nuevas y cumpla las mismas reglas.
+- **Dashboard:** incluir las transacciones múltiples y las vinculaciones en las tarjetas y en la actividad reciente.
 - **PDF:** generar o descargar los formatos aprobados.
 - **Paginación en Declarantes y Dependencias** (hoy cargan la lista completa).
+- **Seguridad:** limitar los intentos de inicio de sesión y cerrar las demás sesiones al cambiar la contraseña.
+- **Confirmar con el Oficial de Cumplimiento** el umbral de $ 25.000.000 de las transacciones múltiples.
