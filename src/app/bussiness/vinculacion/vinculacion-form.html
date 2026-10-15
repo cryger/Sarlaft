@@ -1,0 +1,322 @@
+<div class="mb-8 mt-12">
+  <div class="relative flex flex-col rounded-xl bg-white text-gray-700 shadow-md">
+
+    <!-- Encabezado flotante -->
+    <div
+      class="relative -mt-6 mx-4 mb-6 flex items-center justify-between gap-4 overflow-hidden rounded-xl p-6 text-white
+             bg-gradient-to-tr from-gray-900 to-gray-800 shadow-lg shadow-gray-900/20"
+    >
+      <div>
+        <h6 class="text-base font-semibold">
+          {{ editando ? 'Editar formato' + (actual() ? ' ' + actual()!.consecutivo : '') : 'Vinculación de terceros' }}
+        </h6>
+        <p class="mt-1 text-sm text-white/70">
+          Formato E-PL-FO-09 · Vinculación y actualización de terceros · Información confidencial
+        </p>
+      </div>
+
+      <a
+        [routerLink]="editando ? ['/vinculacion-terceros', id] : ['/vinculacion-terceros']"
+        class="shrink-0 text-xs font-bold uppercase text-white/80 transition hover:text-white"
+      >
+        ← Volver
+      </a>
+    </div>
+
+    @if (cargando()) {
+      <div class="flex flex-col items-center justify-center px-6 py-16" aria-busy="true">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-gray-100 border-t-blue-500"></div>
+        <p class="mt-4 text-sm text-blue-gray-600">Cargando formato...</p>
+      </div>
+    } @else if (errorCarga()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-red-800">No se pudo cargar el formato</p>
+          <p class="mt-1 text-sm text-red-600">{{ errorCarga() }}</p>
+        </div>
+        <a routerLink="/vinculacion-terceros" class="text-sm font-semibold text-red-700 transition hover:text-red-900">Volver a la lista</a>
+      </div>
+    } @else if (bloqueada()) {
+      <div class="mx-6 mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4" role="alert">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 font-bold text-amber-700">!</span>
+        <div class="flex-1">
+          <p class="font-semibold text-amber-900">Este formato ya no se puede editar</p>
+          <p class="mt-1 text-sm text-amber-800">
+            Fue {{ actual()!.estado === 'Aprobado' ? 'aprobado' : 'rechazado' }} por un administrador.
+            Solo un administrador puede modificarlo.
+          </p>
+        </div>
+        <a [routerLink]="['/vinculacion-terceros', id]" class="text-sm font-semibold text-amber-900 transition hover:text-amber-700">Ver detalle</a>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate class="px-6 pb-6">
+
+        @if (editando && actual() && actual()!.estado !== 'Pendiente') {
+          <div class="mb-6 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4" role="note">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 font-bold text-amber-700">!</span>
+            <p class="flex-1 pt-1 text-sm text-amber-900">
+              Este formato ya está <strong>{{ actual()!.estado.toLowerCase() }}</strong>. Al editarlo se conserva su estado y su revisión.
+            </p>
+          </div>
+        }
+
+        @if (error()) {
+          <div class="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert" id="error-general">
+            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-red-100 font-bold text-red-600">!</span>
+            <p class="flex-1 pt-1 text-sm font-medium text-red-700">{{ error() }}</p>
+          </div>
+        }
+
+        <p class="mb-6 rounded-lg bg-gray-50 p-4 text-xs leading-relaxed text-blue-gray-600">
+          Este formato permite obtener un conocimiento verídico de nuestras contrapartes, de acuerdo con la política de supervisión de la
+          Superintendencia Nacional de Salud (Circular Externa 20211700000005-5 de 2021) para el SARLAFT. La información suministrada
+          solo será utilizada para los fines que estipula dicha entidad regulatoria y es de carácter confidencial.
+        </p>
+
+        <!-- ============ Datos de la solicitud ============ -->
+        <fieldset class="mb-8">
+          <legend class="seccion-titulo">Datos de la solicitud</legend>
+          <app-campos-dinamicos [grupo]="gCabecera" [campos]="cabecera" idBase="cab" [intento]="intento()" />
+        </fieldset>
+
+        @if (!tipoPersona()) {
+          <p class="mb-8 rounded-lg border border-blue-gray-100 p-4 text-sm text-blue-gray-600" id="aviso-tipo-persona">
+            Selecciona el <strong>tipo de persona</strong> para ver las secciones que debes diligenciar.
+          </p>
+        }
+
+        <!-- ============ 1. Persona natural ============ -->
+        @if (esNatural()) {
+          <h2 class="mb-4 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700" id="seccion-natural">
+            1. Identificación de persona natural
+          </h2>
+          @for (g of gruposNatural; track g.titulo) {
+            <fieldset class="mb-6">
+              <legend class="seccion-titulo">{{ g.titulo }}</legend>
+              <app-campos-dinamicos [grupo]="gNatural" [campos]="g.campos" idBase="nat" [intento]="intento()" />
+            </fieldset>
+          }
+        }
+
+        <!-- ============ 2. Persona jurídica ============ -->
+        @if (esJuridica()) {
+          <h2 class="mb-4 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700" id="seccion-juridica">
+            2. Identificación de persona jurídica
+          </h2>
+          @for (g of gruposJuridica; track g.titulo) {
+            <fieldset class="mb-6">
+              <legend class="seccion-titulo">{{ g.titulo }}</legend>
+              <app-campos-dinamicos [grupo]="gJuridica" [campos]="g.campos" idBase="jur" [intento]="intento()" />
+            </fieldset>
+          }
+          @for (g of gruposRepresentante; track g.titulo) {
+            <fieldset class="mb-6">
+              <legend class="seccion-titulo">{{ g.titulo }}</legend>
+              <app-campos-dinamicos [grupo]="gRepresentante" [campos]="g.campos" idBase="rep" [intento]="intento()" />
+            </fieldset>
+          }
+        }
+
+        <!-- ============ Información tributaria y financiera ============ -->
+        <h2 class="mb-4 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700">Información tributaria</h2>
+        <fieldset class="mb-6">
+          <legend class="sr-only">Condiciones tributarias que aplican</legend>
+          <app-campos-dinamicos [grupo]="gTributaria" [campos]="tributaria" idBase="trib" [intento]="intento()" />
+        </fieldset>
+
+        <h2 class="mb-4 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700">Información financiera</h2>
+        <fieldset class="mb-6">
+          <legend class="sr-only">Información financiera</legend>
+          <app-campos-dinamicos [grupo]="gFinanciera" [campos]="financiera" idBase="fin" [intento]="intento()" />
+        </fieldset>
+
+        <!-- ============ 3. Accionistas ============ -->
+        @if (esJuridica()) {
+          <h2 class="mb-2 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700" id="seccion-accionistas">
+            3. Accionistas con más del 5% del capital social, aporte o participación
+          </h2>
+          <p class="mb-4 text-xs text-blue-gray-500">Agrega una fila por accionista. Si no hay accionistas con más del 5%, déjalo vacío.</p>
+
+          <div class="mb-8 space-y-4">
+            @for (g of accionistas.controls; track g; let i = $index) {
+              <div class="rounded-lg border border-blue-gray-100 p-4" [attr.data-accionista]="i + 1">
+                <div class="mb-3 flex items-center justify-between">
+                  <p class="text-sm font-bold text-blue-gray-800">Accionista {{ i + 1 }}</p>
+                  <button
+                    type="button"
+                    (click)="quitarAccionista(i)"
+                    [attr.aria-label]="'Quitar el accionista ' + (i + 1)"
+                    class="text-xs font-semibold text-blue-gray-500 transition hover:text-red-600"
+                  >
+                    Quitar
+                  </button>
+                </div>
+                <app-campos-dinamicos [grupo]="g" [campos]="camposAccionista" [idBase]="'acc' + i" [intento]="intento()" />
+              </div>
+            }
+
+            <button
+              type="button"
+              (click)="agregarAccionista()"
+              class="inline-flex h-10 items-center gap-2 rounded-lg border border-blue-gray-200 px-4 text-xs font-bold uppercase
+                     text-blue-gray-700 transition hover:bg-blue-gray-50"
+            >
+              <span class="text-base leading-none">+</span> Agregar accionista
+            </button>
+          </div>
+        }
+
+        <!-- ============ Operaciones internacionales ============ -->
+        <h2 class="mb-4 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700">Operaciones internacionales</h2>
+        <fieldset class="mb-8">
+          <legend class="etiqueta">
+            ¿Realiza alguna de las siguientes operaciones internacionales? Marque las casillas que correspondan
+            <span class="text-red-500">*</span>
+          </legend>
+
+          <div class="mt-2 flex flex-wrap gap-x-6 gap-y-2" id="operaciones">
+            @for (op of operaciones; track op) {
+              <label class="flex cursor-pointer items-center gap-2 text-sm text-blue-gray-700">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 accent-blue-600"
+                  [checked]="marcada(op)"
+                  [attr.data-operacion]="op"
+                  (change)="alternarOperacion(op, $any($event.target).checked)"
+                />
+                {{ op }}
+              </label>
+            }
+          </div>
+          <p class="mt-1 min-h-4 text-xs text-red-600" id="err-operaciones">{{ errorOperaciones() }}</p>
+
+          <div class="mt-4">
+            <app-campos-dinamicos [grupo]="gInternacional" [campos]="campoProductosExterior" idBase="int" [intento]="intento()" />
+          </div>
+
+          @if (productosExterior() === 'SI') {
+            <div class="mt-2 space-y-4">
+              @for (g of productos.controls; track g; let i = $index) {
+                <div class="rounded-lg border border-blue-gray-100 p-4" [attr.data-producto]="i + 1">
+                  <div class="mb-3 flex items-center justify-between">
+                    <p class="text-sm font-bold text-blue-gray-800">Producto {{ i + 1 }}</p>
+                    <button
+                      type="button"
+                      (click)="quitarProducto(i)"
+                      [attr.aria-label]="'Quitar el producto ' + (i + 1)"
+                      class="text-xs font-semibold text-blue-gray-500 transition hover:text-red-600"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                  <app-campos-dinamicos [grupo]="g" [campos]="camposProducto" [idBase]="'prod' + i" [intento]="intento()" />
+                </div>
+              }
+
+              @if (errorProductos()) {
+                <p class="text-xs text-red-600" id="err-productos">{{ errorProductos() }}</p>
+              }
+
+              <button
+                type="button"
+                (click)="agregarProducto()"
+                class="inline-flex h-10 items-center gap-2 rounded-lg border border-blue-gray-200 px-4 text-xs font-bold uppercase
+                       text-blue-gray-700 transition hover:bg-blue-gray-50"
+              >
+                <span class="text-base leading-none">+</span> Agregar producto
+              </button>
+            </div>
+          }
+        </fieldset>
+
+        <!-- ============ 4. PEP ============ -->
+        <h2 class="mb-2 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700">
+          4. Identificación de personas expuestas política o públicamente
+        </h2>
+        <p class="mb-1 text-xs italic text-blue-gray-600">
+          Las preguntas de esta sección corresponden a la persona natural o a la persona jurídica que se identificó.
+        </p>
+        <p class="mb-4 text-xs leading-relaxed text-blue-gray-500">
+          Una persona expuesta políticamente (PEP) es quien desempeñó o ejerce un cargo o función pública relevante en un país (jefes de Estado,
+          políticos de alto nivel, funcionarios gubernamentales, judiciales o militares de alto nivel, rectores de universidades nacionales,
+          altos ejecutivos de empresas estatales, funcionarios de partidos políticos). También se incluyen las personas con reconocimiento
+          público: deportistas, modelos, actores, periodistas, presentadores, artistas, empresarios, líderes religiosos y youtubers.
+        </p>
+        <fieldset class="mb-2">
+          <legend class="sr-only">Preguntas sobre personas expuestas política o públicamente</legend>
+          <app-campos-dinamicos [grupo]="gPep" [campos]="camposPep" idBase="pep" [intento]="intento()" />
+        </fieldset>
+        <p class="mb-8 text-xs italic text-blue-gray-600">
+          Si marca alguna pregunta con «Sí», debe diligenciarse además el formato «Conocimiento ampliado para personas expuestas política y públicamente».
+        </p>
+
+        <!-- ============ 5. Origen de fondos ============ -->
+        <h2 class="mb-2 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700">5. Declaración de origen de fondos</h2>
+        <div class="mb-4 text-xs leading-relaxed text-blue-gray-600">
+          <p class="mb-1">Declaro expresamente a la E.S.E. Hospital San José del Guaviare que:</p>
+          <ol class="list-decimal space-y-1 pl-5">
+            @for (t of textoOrigen; track t) {
+              <li>{{ t }}</li>
+            }
+          </ol>
+        </div>
+        <fieldset class="mb-8">
+          <legend class="sr-only">Origen de fondos</legend>
+          <app-campos-dinamicos [grupo]="gOrigen" [campos]="camposOrigen" idBase="ori" [intento]="intento()" />
+        </fieldset>
+
+        <!-- ============ 6. Datos personales ============ -->
+        <h2 class="mb-2 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700">
+          6. Autorización para el tratamiento de datos personales
+        </h2>
+        <div class="mb-4 space-y-1 text-xs leading-relaxed text-blue-gray-600">
+          @for (t of textoDatos; track t) {
+            <p>{{ t }}</p>
+          }
+        </div>
+        <fieldset class="mb-8">
+          <legend class="sr-only">Autorización de datos personales</legend>
+          <app-campos-dinamicos [grupo]="gAutorizacion" [campos]="camposAutorizacion" idBase="aut" [intento]="intento()" />
+        </fieldset>
+
+        <!-- ============ 7. Firma ============ -->
+        <h2 class="mb-2 rounded-lg bg-blue-gray-50 px-4 py-2 text-sm font-bold uppercase text-blue-gray-700">7. Firma</h2>
+        <p class="mb-4 text-xs leading-relaxed text-blue-gray-600">
+          Declaro haber leído, entendido y aceptado el presente documento y manifiesto que la información que he suministrado obedece a la
+          realidad, asumiendo plena responsabilidad de esta. El formato impreso debe estar 100% diligenciado, sin tachones ni enmendaduras,
+          con firma clara y huella nítida, y conservarse en el expediente.
+        </p>
+        <fieldset class="mb-8">
+          <legend class="sr-only">Firma</legend>
+          <app-campos-dinamicos [grupo]="gFirma" [campos]="camposFirma" idBase="fir" [intento]="intento()" />
+        </fieldset>
+
+        <!-- ============ Acciones ============ -->
+        <div class="flex flex-col-reverse items-stretch gap-3 border-t border-blue-gray-50 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-xs text-blue-gray-500"><span class="text-red-500">*</span> Campo obligatorio</p>
+
+          <div class="flex flex-col-reverse gap-3 sm:flex-row">
+            <a
+              [routerLink]="editando ? ['/vinculacion-terceros', id] : ['/vinculacion-terceros']"
+              class="inline-flex h-11 items-center justify-center rounded-lg px-5 text-xs font-bold uppercase
+                     text-gray-600 transition hover:bg-blue-gray-500/10"
+            >
+              Cancelar
+            </a>
+
+            <button
+              type="submit"
+              [disabled]="guardando()"
+              class="h-11 rounded-lg px-6 text-xs font-bold uppercase text-white shadow-md transition
+                     bg-gradient-to-tr from-gray-900 to-gray-800 hover:shadow-lg
+                     disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ guardando() ? 'Guardando...' : editando ? 'Guardar cambios' : 'Enviar formato' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    }
+  </div>
+</div>

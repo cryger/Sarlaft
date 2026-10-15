@@ -158,6 +158,28 @@ export const routes: Routes = [
         loadComponent: () => import('./bussiness/multiples/multiple-form').then((m) => m.MultipleForm),
       },
 
+            {
+        path: 'vinculacion-terceros',
+        data: { titulo: 'Vinculación de terceros' },
+        loadComponent: () => import('./bussiness/vinculacion/vinculaciones').then((m) => m.Vinculaciones),
+      },
+      // "nuevo" debe ir antes de ":id"
+      {
+        path: 'vinculacion-terceros/nuevo',
+        data: { titulo: 'Nueva vinculación de terceros' },
+        loadComponent: () => import('./bussiness/vinculacion/vinculacion-form').then((m) => m.VinculacionForm),
+      },
+      {
+        path: 'vinculacion-terceros/:id',
+        data: { titulo: 'Detalle de vinculación de terceros' },
+        loadComponent: () => import('./bussiness/vinculacion/vinculacion-detalle').then((m) => m.VinculacionDetalle),
+      },
+      {
+        path: 'vinculacion-terceros/:id/editar',
+        data: { titulo: 'Editar vinculación de terceros' },
+        loadComponent: () => import('./bussiness/vinculacion/vinculacion-form').then((m) => m.VinculacionForm),
+      },
+
       // Sistema
             {
         path: 'historial',
